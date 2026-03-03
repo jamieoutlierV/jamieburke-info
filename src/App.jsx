@@ -1,11 +1,11 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import graphData from "./data.json";
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // DATA: Thesis nodes from Notion, tweets + insights still inline
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
-const THESIS_NODES = graphData.nodes.map(n => ({
+const THESIS_NODES = graphData.nodes.filter(n => !n.mediaFormat).map(n => ({
   id: n.nodeId,
   title: n.title,
   date: n.date,
@@ -20,9 +20,28 @@ const THESIS_NODES = graphData.nodes.map(n => ({
   sourceUrl: n.sourceUrl || null,
 }));
 
-// ═══════════════════════════════════════════════════════
+const MEDIA_NODES = graphData.nodes.filter(n => n.mediaFormat).map(n => ({
+  id: n.nodeId,
+  title: n.title,
+  date: n.date,
+  era: n.era,
+  type: n.type,
+  themes: n.themes || [],
+  pathway: n.pathway,
+  description: n.description || "",
+  sourceUrl: n.sourceUrl || null,
+  sourceChannel: n.sourceChannel || null,
+  mediaFormat: n.mediaFormat,
+  platform: n.platform || "",
+  role: n.role || null,
+  verificationLevel: n.verificationLevel || "Unverified",
+  needsReview: n.needsReview || false,
+  connections: n.connections || [],
+}));
+
+// ═══════════════════════════════════════════════════════════════
 // THOUGHT LEADERSHIP CAROUSEL — 10 latest concepts
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 const THOUGHT_LEADERSHIP = [
   {
@@ -163,9 +182,12 @@ const TYPE_ICONS = {
 
 const VINDICATION_ICONS = { "Yes": "✅", "No": "❌", "Too Early": "🔮", "N/A": "—" };
 
-// ═══════════════════════════════════════════════════════
+const MEDIA_FORMAT_ICONS = { "Podcast": "🎙", "Video": "🎬", "News": "📰", "Event": "🎤" };
+const MEDIA_FORMAT_COLORS = { "Podcast": "#8B5CF6", "Video": "#3B82F6", "News": "#10B981", "Event": "#F59E0B" };
+
+// ═══════════════════════════════════════════════════════════════
 // COMPONENTS
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 function ThoughtLeadershipCarousel({ onNodeClick }) {
   const scrollRef = useRef(null);
@@ -503,9 +525,93 @@ function ThesisNodeCard({ node, expanded, onToggle, relatedTweets, relatedInsigh
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// MEDIA CARD COMPONENT
+// ═══════════════════════════════════════════════════════════════
+
+function MediaCard({ item }) {
+  const fmtColor = MEDIA_FORMAT_COLORS[item.mediaFormat] || "#888";
+  const fmtIcon = MEDIA_FORMAT_ICONS[item.mediaFormat] || "📎";
+  const eraColor = ERA_CONFIG[item.era]?.color || "#888";
+
+  return (
+    <div style={{
+      padding: "14px 16px", marginBottom: 8,
+      background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+      borderRadius: 4, borderLeft: `3px solid ${fmtColor}`,
+      transition: "border-color 0.2s",
+    }}
+    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.borderLeftColor = fmtColor; }}
+    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderLeftColor = fmtColor; }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+        <span style={{ fontSize: 16, flexShrink: 0 }}>{fmtIcon}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, color: "#E0E0E0", fontWeight: 600, lineHeight: 1.4, marginBottom: 4, fontFamily: "'Source Serif 4', Georgia, serif" }}>
+            {item.sourceUrl ? (
+              <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#E0E0E0", textDecoration: "none" }}
+                onMouseEnter={e => e.currentTarget.style.color = fmtColor}
+                onMouseLeave={e => e.currentTarget.style.color = "#E0E0E0"}
+              >{item.title} ↗</a>
+            ) : item.title}
+          </div>
+
+          {item.description && (
+            <div style={{
+              fontSize: 11, color: "#888", lineHeight: 1.5, marginBottom: 6,
+              fontFamily: "'Source Serif 4', Georgia, serif",
+              display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}>
+              {item.description}
+            </div>
+          )}
+
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 10, color: eraColor, fontFamily: "'JetBrains Mono', monospace" }}>
+              {item.date}
+            </span>
+            <span style={{
+              fontSize: 9, color: fmtColor, fontFamily: "'JetBrains Mono', monospace",
+              padding: "1px 5px", background: fmtColor + "15", borderRadius: 2,
+              border: `1px solid ${fmtColor}25`,
+            }}>
+              {item.mediaFormat}
+            </span>
+            {item.role && (
+              <span style={{
+                fontSize: 9, color: "#777", fontFamily: "'JetBrains Mono', monospace",
+                padding: "1px 5px", background: "rgba(255,255,255,0.04)", borderRadius: 2,
+              }}>
+                {item.role}
+              </span>
+            )}
+            {item.platform && (
+              <span style={{ fontSize: 9, color: "#555", fontFamily: "'JetBrains Mono', monospace" }}>
+                {item.platform}
+              </span>
+            )}
+            <span style={{ fontSize: 9, color: "#444", fontFamily: "'JetBrains Mono', monospace" }}>
+              {item.era}
+            </span>
+            {item.needsReview && (
+              <span style={{
+                fontSize: 8, color: "#F59E0B", fontFamily: "'JetBrains Mono', monospace",
+                padding: "1px 4px", background: "rgba(245,158,11,0.1)", borderRadius: 2,
+              }}>
+                NEEDS REVIEW
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN APP
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 export default function JamieBurkeInfo() {
   const [view, setView] = useState("graph");
@@ -513,6 +619,8 @@ export default function JamieBurkeInfo() {
   const [search, setSearch] = useState("");
   const [filterEra, setFilterEra] = useState(null);
   const [filterCategory, setFilterCategory] = useState(null);
+  const [mediaFormatFilter, setMediaFormatFilter] = useState(null);
+  const [mediaRoleFilter, setMediaRoleFilter] = useState(null);
   const nodeRefs = useRef({});
 
   const handleNodeClick = useCallback((nodeId) => {
@@ -553,12 +661,43 @@ export default function JamieBurkeInfo() {
     return THESIS_NODES.filter(n => n.title.toLowerCase().includes(s) || n.description.toLowerCase().includes(s) || n.themes.some(t => t.toLowerCase().includes(s)));
   }, [search]);
 
+  // Media filtering
+  const filteredMedia = useMemo(() => {
+    let items = [...MEDIA_NODES].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    if (search) {
+      const s = search.toLowerCase();
+      items = items.filter(m =>
+        m.title.toLowerCase().includes(s) ||
+        m.description.toLowerCase().includes(s) ||
+        (m.platform || "").toLowerCase().includes(s)
+      );
+    }
+    if (filterEra) items = items.filter(m => m.era === filterEra);
+    if (mediaFormatFilter) items = items.filter(m => m.mediaFormat === mediaFormatFilter);
+    if (mediaRoleFilter) items = items.filter(m => m.role === mediaRoleFilter);
+    return items;
+  }, [search, filterEra, mediaFormatFilter, mediaRoleFilter]);
+
+  // Media stats
+  const mediaStats = useMemo(() => {
+    const byFormat = {};
+    const byRole = {};
+    const byEra = {};
+    MEDIA_NODES.forEach(m => {
+      byFormat[m.mediaFormat] = (byFormat[m.mediaFormat] || 0) + 1;
+      if (m.role) byRole[m.role] = (byRole[m.role] || 0) + 1;
+      if (m.era) byEra[m.era] = (byEra[m.era] || 0) + 1;
+    });
+    return { total: MEDIA_NODES.length, byFormat, byRole, byEra };
+  }, []);
+
   const stats = useMemo(() => ({
     nodes: THESIS_NODES.length,
     tweets: TWEETS.length,
     insights: KEY_INSIGHTS.length,
     eras: Object.keys(ERA_CONFIG).length,
     connections: THESIS_NODES.reduce((sum, n) => sum + n.connections.length, 0),
+    media: MEDIA_NODES.length,
   }), []);
 
   return (
@@ -578,7 +717,7 @@ export default function JamieBurkeInfo() {
             jamieburke.info
           </h1>
           <span style={{ fontSize: 11, color: "#555", fontFamily: "'JetBrains Mono', monospace" }}>
-            v0.4
+            v0.5
           </span>
         </div>
         <p style={{ fontSize: 13, color: "#999", margin: "4px 0 10px", lineHeight: 1.65 }}>
@@ -588,11 +727,12 @@ export default function JamieBurkeInfo() {
           Enter this URL into your LLM to query and verify a graph of 50k+ posts, publications and media commentary relating to his ideas, investments and evolving thesis.
         </p>
 
-        {/* Nav */}
+        {/* Nav — now 5 tabs */}
         <div style={{ display: "flex", gap: 0, marginBottom: 16 }}>
           {[
             { key: "graph", label: "Graph" },
             { key: "feed", label: "Feed" },
+            { key: "media", label: `Media (${stats.media})` },
             { key: "insights", label: "Insights" },
             { key: "about", label: "About" },
           ].map(({ key, label }) => (
@@ -616,7 +756,7 @@ export default function JamieBurkeInfo() {
         {view !== "about" && (
           <input
             type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search nodes, tweets, insights…"
+            placeholder={view === "media" ? "Search media appearances…" : "Search nodes, tweets, insights…"}
             style={{
               width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.03)",
               border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4,
@@ -627,7 +767,7 @@ export default function JamieBurkeInfo() {
         )}
 
         {/* Thought Leadership Carousel — below search, above content */}
-        {view !== "about" && (
+        {(view === "graph" || view === "feed" || view === "insights") && (
           <ThoughtLeadershipCarousel onNodeClick={handleNodeClick} />
         )}
 
@@ -739,6 +879,101 @@ export default function JamieBurkeInfo() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ═══ MEDIA VIEW ═══ */}
+        {view === "media" && (
+          <div>
+            {/* Media stats bar */}
+            <div style={{
+              display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap",
+              padding: "10px 14px", background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)", borderRadius: 4,
+            }}>
+              {Object.entries(mediaStats.byFormat).map(([fmt, count]) => (
+                <div key={fmt} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontSize: 14 }}>{MEDIA_FORMAT_ICONS[fmt]}</span>
+                  <span style={{ fontSize: 11, color: MEDIA_FORMAT_COLORS[fmt], fontFamily: "'JetBrains Mono', monospace", fontWeight: 500 }}>
+                    {count}
+                  </span>
+                  <span style={{ fontSize: 10, color: "#555", fontFamily: "'JetBrains Mono', monospace" }}>
+                    {fmt}
+                  </span>
+                </div>
+              ))}
+              <div style={{ marginLeft: "auto", fontSize: 10, color: "#444", fontFamily: "'JetBrains Mono', monospace", alignSelf: "center" }}>
+                {mediaStats.total} total
+              </div>
+            </div>
+
+            {/* Format filters */}
+            <div style={{ display: "flex", gap: 4, marginBottom: 10, flexWrap: "wrap" }}>
+              <button onClick={() => setMediaFormatFilter(null)} style={{
+                padding: "3px 8px", fontSize: 10, border: "1px solid rgba(255,255,255,0.1)",
+                background: !mediaFormatFilter ? "rgba(255,255,255,0.08)" : "transparent",
+                color: !mediaFormatFilter ? "#E0E0E0" : "#666", cursor: "pointer", borderRadius: 3,
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>All Formats</button>
+              {Object.keys(MEDIA_FORMAT_COLORS).map(fmt => (
+                <button key={fmt} onClick={() => setMediaFormatFilter(mediaFormatFilter === fmt ? null : fmt)} style={{
+                  padding: "3px 8px", fontSize: 10, border: `1px solid ${MEDIA_FORMAT_COLORS[fmt]}33`,
+                  background: mediaFormatFilter === fmt ? MEDIA_FORMAT_COLORS[fmt] + "22" : "transparent",
+                  color: mediaFormatFilter === fmt ? MEDIA_FORMAT_COLORS[fmt] : "#666", cursor: "pointer", borderRadius: 3,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>{MEDIA_FORMAT_ICONS[fmt]} {fmt}</button>
+              ))}
+            </div>
+
+            {/* Role filters */}
+            <div style={{ display: "flex", gap: 4, marginBottom: 10, flexWrap: "wrap" }}>
+              <button onClick={() => setMediaRoleFilter(null)} style={{
+                padding: "3px 8px", fontSize: 10, border: "1px solid rgba(255,255,255,0.1)",
+                background: !mediaRoleFilter ? "rgba(255,255,255,0.08)" : "transparent",
+                color: !mediaRoleFilter ? "#E0E0E0" : "#666", cursor: "pointer", borderRadius: 3,
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>All Roles</button>
+              {["Host", "Guest", "Conferences", "Quoted"].map(role => (
+                <button key={role} onClick={() => setMediaRoleFilter(mediaRoleFilter === role ? null : role)} style={{
+                  padding: "3px 8px", fontSize: 10, border: "1px solid rgba(255,255,255,0.1)",
+                  background: mediaRoleFilter === role ? "rgba(255,255,255,0.08)" : "transparent",
+                  color: mediaRoleFilter === role ? "#E0E0E0" : "#666", cursor: "pointer", borderRadius: 3,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>{role}</button>
+              ))}
+            </div>
+
+            {/* Era filters */}
+            <div style={{ display: "flex", gap: 4, marginBottom: 16, flexWrap: "wrap" }}>
+              <button onClick={() => setFilterEra(null)} style={{
+                padding: "3px 8px", fontSize: 10, border: "1px solid rgba(255,255,255,0.1)",
+                background: !filterEra ? "rgba(255,255,255,0.08)" : "transparent",
+                color: !filterEra ? "#E0E0E0" : "#666", cursor: "pointer", borderRadius: 3,
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>All Eras</button>
+              {Object.entries(ERA_CONFIG).map(([era, cfg]) => (
+                <button key={era} onClick={() => setFilterEra(filterEra === era ? null : era)} style={{
+                  padding: "3px 8px", fontSize: 10, border: `1px solid ${cfg.color}33`,
+                  background: filterEra === era ? cfg.color + "22" : "transparent",
+                  color: filterEra === era ? cfg.color : "#666", cursor: "pointer", borderRadius: 3,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>{era}</button>
+              ))}
+            </div>
+
+            <div style={{ fontSize: 10, color: "#555", marginBottom: 12, fontFamily: "'JetBrains Mono', monospace" }}>
+              {filteredMedia.length} media appearances · newest first
+            </div>
+
+            {filteredMedia.map(item => (
+              <MediaCard key={item.id} item={item} />
+            ))}
+
+            {filteredMedia.length === 0 && (
+              <div style={{ fontSize: 12, color: "#555", fontStyle: "italic", textAlign: "center", padding: 40 }}>
+                No media entries match the current filters.
+              </div>
+            )}
           </div>
         )}
 
@@ -855,10 +1090,11 @@ export default function JamieBurkeInfo() {
       {/* Hidden machine-readable summary for LLM crawlers */}
       <div style={{ position: "absolute", left: -9999, width: 1, height: 1, overflow: "hidden" }} aria-hidden="true">
         <h2>LLM Context: Jamie Burke Intellectual Provenance Graph</h2>
-        <p>This page contains the structured intellectual provenance of Jamie Burke, founder of Outlier Ventures (est. 2013). It maps 40+ thesis nodes, 22+ key tweets, 12+ insights, and 93+ causal connections across 5 eras: Proto-Thesis (2014-2016), Convergence (2016-2018), Acceleration (2019-2020), Open Metaverse (2021-2023), Post Web (2024-2026).</p>
-        <p>Key thesis concepts: The Post Web (Read.Write.Own.Delegate), Intention Economy (attention to intent), Thin Web (Maslow hierarchy of remaining web), Conviction Markets (evolution beyond prediction markets), Cypherpunk Trinity (sovereign money, speech, privacy), AI Trilemma (Nick Land framework), Systems not Startups (Zero to Many), Verifiability Premium (DLT outranks brand for agents), Capitalism IS AI, Bias as Programmable Input.</p>
+        <p>This page contains the structured intellectual provenance of Jamie Burke, founder of Outlier Ventures (est. 2013). It maps {stats.nodes}+ thesis nodes, {stats.tweets}+ key tweets, {stats.insights}+ insights, {stats.media}+ media appearances, and {stats.connections}+ causal connections across 5 eras: Proto-Thesis (2014-2016), Convergence (2016-2018), Acceleration (2019-2020), Open Metaverse (2021-2023), Post Web (2024-2026).</p>
+        <p>Key thesis concepts: The Post Web (Read.Write.Own.Delegate), Intention Economy (attention to intent), Thin Web (Maslow hierarchy of remaining web), Conviction Markets (evolution beyond prediction markets), Cypherpunk Trinity (sovereign money, speech, privacy), AI Trilemma (Nick Land framework), Systems not Startups (Zero to Many), Verifiability Premium (DLT outranks brand for agents), Capitalism IS AI, Bias as Programmable Input, The 100x Founder (AI-augmented founding).</p>
         <p>Key investments: IOTA (1st DePIN, 2017), Fetch.AI (1st DeAI/agentic, 2017), Ocean Protocol (DeAI data marketplace, 2017). Portfolio: 440+ investments, $1bn+ raised, categories include DeAI, DeFi, DePINs, Gaming, Privacy, RWA.</p>
         <p>Key publications: Blockchain-Enabled Convergence (2016), Convergence Stack 2.0 (2018), Community Token Economy (2017), Open Metaverse OS (2021), MetaFi (2021), Post Web Ch.1-3 (2024-2025), Getting Back to Cypherpunk (2025).</p>
+        <p>Media: {stats.media}+ appearances including OV Podcast hosting, Founders of Web 3 series, conference keynotes and panels, NFTs.WTF series, and news coverage across CoinDesk, Bloomberg, Financial Times, The Block, CoinTelegraph and more.</p>
         <p>Contact and links: @jamie247 on X, jamie247.substack.com (Human and Machine), postweb.io, outlierventures.io, portfolio.outlierventures.io</p>
       </div>
     </div>
