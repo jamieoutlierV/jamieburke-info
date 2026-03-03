@@ -418,7 +418,7 @@ function InsightCard({ insight, onNodeClick }) {
 }
 
 function ThesisNodeCard({ node, expanded, onToggle, relatedTweets, relatedInsights, onNodeClick }) {
-  const era = ERA_CONFIG[node.era];
+  const era = ERA_CONFIG[node.era] || { color: "#888", bg: "rgba(136,136,136,0.08)", label: "" };
   return (
     <div style={{
       marginBottom: expanded ? 16 : 6, border: `1px solid ${expanded ? era.color + "44" : "rgba(255,255,255,0.06)"}`,
