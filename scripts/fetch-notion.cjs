@@ -92,6 +92,10 @@ function transformPage(page) {
     attestationUid: urlVal(p['Attestation UID']),
     timestampProof: urlVal(p['Timestamp Proof']),
     waybackUrl: urlVal(p['Wayback URL']),
+    // Media-specific fields
+    mediaFormat: selectVal(p['Media Format']),
+    platform: richTextToPlain(p['Platform']?.rich_text),
+    role: selectVal(p['Role']),
   };
 }
 
