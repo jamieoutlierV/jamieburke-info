@@ -732,7 +732,7 @@ export default function JamieBurkeInfo() {
           {[
             { key: "graph", label: "Graph" },
             { key: "feed", label: "Feed" },
-            { key: "media", label: `Media (${stats.media})` },
+            { key: "media", label: "Media" },
             { key: "insights", label: "Insights" },
             { key: "about", label: "About" },
           ].map(({ key, label }) => (
