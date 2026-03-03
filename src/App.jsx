@@ -736,7 +736,7 @@ export default function JamieBurkeInfo() {
             { key: "insights", label: "Insights" },
             { key: "about", label: "About" },
           ].map(({ key, label }) => (
-            <button key={key} onClick={() => setView(key)} style={{
+           <button key={key} onClick={() => { setView(key); setFilterEra(null); setFilterCategory(null); setMediaFormatFilter(null); setMediaRoleFilter(null); }} style={{
               padding: "6px 14px", fontSize: 11, border: "1px solid rgba(255,255,255,0.1)",
               borderRight: "none", background: view === key ? "rgba(255,255,255,0.06)" : "transparent",
               color: view === key ? "#E0E0E0" : "#666", cursor: "pointer",
