@@ -5,46 +5,46 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 // ═══════════════════════════════════════════════════════
 
 const THESIS_NODES = [
-  { id: "ob2014", title: "10 Principles of Open Business", date: "2014-01", era: "Proto-Thesis", type: "Publication", themes: ["Thesis","Culture"], pathway: null, description: "Co-authored with David Cushman. 9 of 10 principles predicted foundational Web3 concepts — radical transparency, co-creation, trust earned through behaviour.", vindicated: "Yes", verificationLevel: "Externally Published", connections: [] },
-  { id: "ov2014", title: "Outlier Ventures Founded", date: "2014-06", era: "Proto-Thesis", type: "Organisation", themes: ["Investment","Building"], pathway: "Investment", description: "Europe's first blockchain venture builder & fund. Among the first 3 dedicated crypto funds globally after Blockchain Capital (2013).", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["ob2014"] },
-  { id: "bs2015", title: "Blockstars.io & Ecosystem Tracker", date: "2015-01", era: "Proto-Thesis", type: "Product", themes: ["Building","Research"], pathway: "Research", description: "First searchable database of blockchain startups. By 2017: 1,220+ startups, 800 pitch decks, 18 countries, $22m dealflow.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["ov2014"] },
-  { id: "mc2015", title: "MoneyCircles.com", date: "2015-03", era: "Proto-Thesis", type: "Venture", themes: ["Building","DeFi"], pathway: null, description: "P2P lending on private Ethereum blockchain. DeFi prototype 4 years before 'DeFi' existed.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ob2014","ov2014"] },
-  { id: "ba2016", title: "Blockchain Angels Network", date: "2016-02", era: "Proto-Thesis", type: "Organisation", themes: ["Investment","Community"], pathway: "Investment", description: "First blockchain-dedicated angel investor network. 6-week cycles across European cities.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ov2014"] },
-  { id: "conv2016", title: "Blockchain-Enabled Convergence Thesis", date: "2016-11", era: "Convergence", type: "Thesis", themes: ["Thesis","Research"], pathway: "Technology", description: "First published thesis framing blockchain as foundational infrastructure enabling convergence of AI, IoT, autonomous systems.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ob2014","ov2014","bs2015","ba2016"] },
-  { id: "bs99pct", title: "99% of Blockchain Startups Are Bullshit", date: "2017-09", era: "Convergence", type: "Publication", themes: ["Thesis","Investment"], pathway: "Investment", description: "Public manifesto for shifting from broad dealflow to thesis-driven selection.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ba2016","conv2016"] },
-  { id: "iota2017", title: "IOTA Investment (Proto-DePIN)", date: "2017-03", era: "Convergence", type: "Investment", themes: ["Investment","DePIN"], pathway: "Technology", description: "Machine-to-machine economy on Tangle. First DePIN investment before the term existed.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016"] },
-  { id: "frost2017", title: "Frost & Sullivan Blockchain Startup Map", date: "2017-03", era: "Convergence", type: "Partnership", themes: ["Research"], pathway: "Research", description: "Used OV's 1,200+ startup tracker to produce '2017 Global Blockchain Startup Map'.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["bs2015"] },
-  { id: "fidelity2017", title: "Fidelity Convergence Programme", date: "2017-05", era: "Convergence", type: "Event", themes: ["Investment","Thesis"], pathway: null, description: "Institutional finance engaging with Convergence thesis 7 years before the Bitcoin ETF.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016"] },
-  { id: "imp2017", title: "Imperial College R&D Partnership", date: "2017-06", era: "Convergence", type: "Partnership", themes: ["Research","Building"], pathway: "Research", description: "First blockchain VC ↔ university applied R&D partnership. IC3RE + OV.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016","bs2015"] },
-  { id: "ocean2017", title: "Ocean Protocol Investment (DeAI)", date: "2017-09", era: "Convergence", type: "Investment", themes: ["Investment","DeAI"], pathway: "Technology", description: "Founding investor. Decentralised data marketplace enabling AI/ML training.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016"] },
-  { id: "cte2017", title: "Community Token Economy Paper", date: "2017-09", era: "Convergence", type: "Thesis", themes: ["Thesis","Research"], pathway: null, description: "Framework for community-governed token economies.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["conv2016","ob2014"] },
-  { id: "fetch2018", title: "Fetch.AI Investment (Crypto Agents)", date: "2018-01", era: "Convergence", type: "Investment", themes: ["Investment","Agents"], pathway: "Technology", description: "Autonomous economic agents on blockchain. First crypto-native agent investment.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016","ocean2017"] },
-  { id: "3ds2018", title: "3Ds of Token Design (with Imperial)", date: "2018-06", era: "Convergence", type: "Publication", themes: ["Research","Thesis"], pathway: "Research", description: "Award-winning paper on token design methodology. Enterprise Blockchain Award, Toronto.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["imp2017","cte2017"] },
-  { id: "stack2018", title: "The Convergence Ecosystem Paper (2.0)", date: "2018-06", era: "Convergence", type: "Thesis", themes: ["Thesis","Research"], pathway: "Technology", description: "The full Convergence Stack: blockchain → IoT → big data → AI.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["conv2016","iota2017","ocean2017","fetch2018"] },
-  { id: "h2o2018", title: "H2O Demo — First Convergence Stack App", date: "2018-12", era: "Convergence", type: "Milestone", themes: ["Building","DeAI"], pathway: "Technology", description: "ML running on OrbitDB + Ocean Protocol at Digital Catapult. Proof the Stack worked.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["stack2018","ocean2017"] },
-  { id: "alliance2019", title: "Convergence Alliance (18 Members)", date: "2019-07", era: "Acceleration", type: "Organisation", themes: ["Partnership","Thesis"], pathway: "Technology", description: "JLR, SAP, Deutsche Telekom, IOTA, Ocean, Fetch.AI, Imperial. $30M committed.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["stack2018","iota2017","ocean2017","fetch2018","imp2017"] },
-  { id: "basecamp2019", title: "Base Camp Accelerator Launched", date: "2019-09", era: "Acceleration", type: "Programme", themes: ["Building","Investment"], pathway: "Investment", description: "First dedicated Web3 accelerator at scale. 5,000+ applications, $350M+ raised.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016","bs99pct","ov2014"] },
-  { id: "diffusion2019", title: "Diffusion 2019 Devcon", date: "2019-10", era: "Acceleration", type: "Event", themes: ["Community","Building"], pathway: null, description: "2-day devcon at Factory Berlin. 'No one has a blockchain problem. Everyone has a data problem.'", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["alliance2019","stack2018"] },
-  { id: "cryptoart_pre2021", title: "Personal Crypto Art Collecting", date: "2020-06", era: "Acceleration", type: "Milestone", themes: ["Digital Art","Investment"], pathway: "Digital Art", description: "Early crypto art collector. Ownership as cultural signal, not just financial.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["omos2021"] },
-  { id: "defi2020", title: "Broken DeFi Hypecycle (3-Part Series)", date: "2020-10", era: "Acceleration", type: "Publication", themes: ["Thesis","DeFi"], pathway: null, description: "Predicted 5-year DeFi megacycle, NFTs as next retail trigger, institutional cycle via ETFs.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["mc2015","conv2016"] },
-  { id: "defi2_2020", title: "DeFi 2.0: AEAs as 'AI Lego'", date: "2020-11", era: "Acceleration", type: "Publication", themes: ["Thesis","Agents","DeFi"], pathway: null, description: "AEAs as 'AI Lego' overlaying Ethereum's 'Money Lego'. 4 years before Post Web Ch.2.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["fetch2018","defi2020"] },
-  { id: "omos2021", title: "The Open Metaverse OS", date: "2021-01", era: "Open Metaverse", type: "Thesis", themes: ["Thesis","Digital Art","DeFi"], pathway: "Digital Art", description: "Web3 infrastructure as capabilities of an open metaverse vs closed Big Tech metaverse.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["conv2016","defi2020","cryptoart_pre2021"] },
-  { id: "100xart2021", title: "100xARt District in Decentraland", date: "2021-01", era: "Open Metaverse", type: "Project", themes: ["Digital Art","Building"], pathway: "Digital Art", description: "First curated virtual art district. Beeple, Jose Delbo, 24 auctions.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["cryptoart_pre2021","omos2021"] },
-  { id: "nft_social_2021", title: "NFTs as Social Currency (CoinDesk)", date: "2021-03", era: "Open Metaverse", type: "Concept", themes: ["Digital Art","Thesis"], pathway: "Digital Art", description: "'NFTs are a form of social currency.' Ownership as badge of belonging.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["cryptoart_pre2021","100xart2021"] },
-  { id: "trapped_value_2021", title: "Billions in Trapped Digital Value", date: "2021-03", era: "Open Metaverse", type: "Concept", themes: ["Digital Art","Thesis","DeFi"], pathway: "Digital Art", description: "'Billions of dollars of digital skins trapped in gaming platforms.'", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["cryptoart_pre2021","omos2021"] },
-  { id: "nftswtf2021", title: "NFTs.WTF D-Zine & Documentary", date: "2021-04", era: "Open Metaverse", type: "Publication", themes: ["Digital Art","Community"], pathway: "Digital Art", description: "100 industry leaders. 3-hour audio documentary. Curation → cultural production.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["100xart2021","nft_social_2021","trapped_value_2021"] },
-  { id: "metafi2021", title: "MetaFi: DeFi for the Metaverse", date: "2021-12", era: "Open Metaverse", type: "Thesis", themes: ["Thesis","DeFi","Digital Art"], pathway: "Digital Art", description: "How DeFi primitives serve the metaverse economy.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["omos2021","defi2020","trapped_value_2021"] },
-  { id: "nft_decouple_2022", title: "NFTs Decouple from Crypto Speculation", date: "2022-06", era: "Open Metaverse", type: "Concept", themes: ["Digital Art","Thesis"], pathway: "Digital Art", description: "Bear market analysis: NFTs as cultural assets that survive crypto cycles.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["nft_social_2021","nftswtf2021"] },
-  { id: "dear2022", title: "Dear Web3 Founders (Bear Market Letter)", date: "2022-06", era: "Open Metaverse", type: "Publication", themes: ["Investment","Thesis"], pathway: "Investment", description: "Crypto as 'ultimate COVID stock', flight to quality, tokens for incentive design.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["defi2020","omos2021","basecamp2019"] },
-  { id: "no1_2023", title: "#1 Web3 Investor Globally (Q1 2023)", date: "2023-03", era: "Open Metaverse", type: "Milestone", themes: ["Investment"], pathway: "Investment", description: "42 deals in Q1 (3x Coinbase's 14). Bloomberg / Architect Partners confirmed.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["basecamp2019","bs99pct","ov2014"] },
-  { id: "ov_portfolio_2024", title: "OV Portfolio: 350+ Companies, $11bn Value", date: "2024-01", era: "Post Web", type: "Milestone", themes: ["Investment","Building"], pathway: "Investment", description: "440 investments (PitchBook). $1bn raised, $11bn network value. DeAI, DeFi, DePINs, Gaming, Privacy, RWA.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["ov2014","conv2016","basecamp2019","no1_2023"] },
-  { id: "pw1_2024", title: "Post Web Ch.1: The Web Is Disappearing", date: "2024-09", era: "Post Web", type: "Thesis", themes: ["Thesis","Agents"], pathway: "Technology", description: "AI agents replacing browsing. Web dissolving into agent-mediated interactions.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["conv2016","stack2018","fetch2018","defi2_2020"] },
-  { id: "pw2_2024", title: "Post Web Ch.2: The Technology Stack", date: "2024-12", era: "Post Web", type: "Thesis", themes: ["Thesis","Agents","DeAI"], pathway: "Technology", description: "AI agents + crypto rails + decentralised identity + machine-readable value.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["pw1_2024","stack2018","fetch2018"] },
-  { id: "pw3_2025", title: "Post Web Ch.3: Zero to Many", date: "2025-03", era: "Post Web", type: "Thesis", themes: ["Thesis","Investment"], pathway: "Technology", description: "New venture dynamics. Startups, tokens, and agents combine for network effects.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["pw1_2024","pw2_2024","basecamp2019"] },
-  { id: "cypherpunk2025", title: "Getting Back to Cypherpunk", date: "2025-08", era: "Post Web", type: "Publication", themes: ["Thesis","Culture"], pathway: null, description: "The Cypherpunk Trinity. Return to first principles of privacy, sovereignty, cryptographic proof.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["ob2014","pw1_2024"] },
-  { id: "newera2025", title: "New Paradigm for Crypto, New Era for OV", date: "2025-08", era: "Post Web", type: "Publication", themes: ["Investment","Thesis","Agents"], pathway: "Investment", description: "Shift to later-stage, liquid. 'Investing in agentic systems, not classic startups.'", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["pw1_2024","pw2_2024","no1_2023","basecamp2019"] },
-  { id: "conviction2025", title: "Conviction Markets", date: "2025-09", era: "Post Web", type: "Concept", themes: ["Thesis","Investment"], pathway: "Investment", description: "Markets driven by thesis conviction rather than momentum. No exit button — you commit to an outcome. Conviction over speculation.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["newera2025","pw2_2024"] },
-  { id: "adai2025", title: "ADAI — A Digital Arts Institute", date: "2025-10", era: "Post Web", type: "Organisation", themes: ["Digital Art","Building"], pathway: "Digital Art", description: "Helping digital arts tell its story and express its plurality of culture and practice.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["cryptoart_pre2021","100xart2021","nftswtf2021","nft_decouple_2022"] },
+  { id: "ob2014", title: "10 Principles of Open Business", date: "2014-01", era: "Proto-Thesis", type: "Publication", themes: ["Thesis","Culture"], pathway: null, description: "Co-authored with David Cushman. 9 of 10 principles predicted foundational Web3 concepts — radical transparency, co-creation, trust earned through behaviour.", vindicated: "Yes", verificationLevel: "Externally Published", connections: [], sourceUrl: "https://outlierventures.io" },
+  { id: "ov2014", title: "Outlier Ventures Founded", date: "2014-06", era: "Proto-Thesis", type: "Organisation", themes: ["Investment","Building"], pathway: "Investment", description: "Europe's first blockchain venture builder & fund. Among the first 3 dedicated crypto funds globally after Blockchain Capital (2013).", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["ob2014"], sourceUrl: "https://outlierventures.io" },
+  { id: "bs2015", title: "Blockstars.io & Ecosystem Tracker", date: "2015-01", era: "Proto-Thesis", type: "Product", themes: ["Building","Research"], pathway: "Research", description: "First searchable database of blockchain startups. By 2017: 1,220+ startups, 800 pitch decks, 18 countries, $22m dealflow.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["ov2014"], sourceUrl: "https://outlierventures.io" },
+  { id: "mc2015", title: "MoneyCircles.com", date: "2015-03", era: "Proto-Thesis", type: "Venture", themes: ["Building","DeFi"], pathway: null, description: "P2P lending on private Ethereum blockchain. DeFi prototype 4 years before 'DeFi' existed.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ob2014","ov2014"], sourceUrl: "https://outlierventures.io" },
+  { id: "ba2016", title: "Blockchain Angels Network", date: "2016-02", era: "Proto-Thesis", type: "Organisation", themes: ["Investment","Community"], pathway: "Investment", description: "First blockchain-dedicated angel investor network. 6-week cycles across European cities.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ov2014"], sourceUrl: "https://outlierventures.io" },
+  { id: "conv2016", title: "Blockchain-Enabled Convergence Thesis", date: "2016-11", era: "Convergence", type: "Thesis", themes: ["Thesis","Research"], pathway: "Technology", description: "First published thesis framing blockchain as foundational infrastructure enabling convergence of AI, IoT, autonomous systems.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ob2014","ov2014","bs2015","ba2016"], sourceUrl: "https://outlierventures.io/research/blockchain-enabled-convergence/" },
+  { id: "bs99pct", title: "99% of Blockchain Startups Are Bullshit", date: "2017-09", era: "Convergence", type: "Publication", themes: ["Thesis","Investment"], pathway: "Investment", description: "Public manifesto for shifting from broad dealflow to thesis-driven selection.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ba2016","conv2016"], sourceUrl: "https://outlierventures.io" },
+  { id: "iota2017", title: "IOTA Investment (Proto-DePIN)", date: "2017-03", era: "Convergence", type: "Investment", themes: ["Investment","DePIN"], pathway: "Technology", description: "Machine-to-machine economy on Tangle. First DePIN investment before the term existed.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016"], sourceUrl: "https://www.iota.org" },
+  { id: "frost2017", title: "Frost & Sullivan Blockchain Startup Map", date: "2017-03", era: "Convergence", type: "Partnership", themes: ["Research"], pathway: "Research", description: "Used OV's 1,200+ startup tracker to produce '2017 Global Blockchain Startup Map'.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["bs2015"], sourceUrl: "https://outlierventures.io" },
+  { id: "fidelity2017", title: "Fidelity Convergence Programme", date: "2017-05", era: "Convergence", type: "Event", themes: ["Investment","Thesis"], pathway: null, description: "Institutional finance engaging with Convergence thesis 7 years before the Bitcoin ETF.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016"], sourceUrl: "https://outlierventures.io" },
+  { id: "imp2017", title: "Imperial College R&D Partnership", date: "2017-06", era: "Convergence", type: "Partnership", themes: ["Research","Building"], pathway: "Research", description: "First blockchain VC ↔ university applied R&D partnership. IC3RE + OV.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016","bs2015"], sourceUrl: "https://www.imperial.ac.uk" },
+  { id: "ocean2017", title: "Ocean Protocol Investment (DeAI)", date: "2017-09", era: "Convergence", type: "Investment", themes: ["Investment","DeAI"], pathway: "Technology", description: "Founding investor. Decentralised data marketplace enabling AI/ML training.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016"], sourceUrl: "https://oceanprotocol.com" },
+  { id: "cte2017", title: "Community Token Economy Paper", date: "2017-09", era: "Convergence", type: "Thesis", themes: ["Thesis","Research"], pathway: null, description: "Framework for community-governed token economies.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["conv2016","ob2014"], sourceUrl: "https://outlierventures.io" },
+  { id: "fetch2018", title: "Fetch.AI Investment (Crypto Agents)", date: "2018-01", era: "Convergence", type: "Investment", themes: ["Investment","Agents"], pathway: "Technology", description: "Autonomous economic agents on blockchain. First crypto-native agent investment.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016","ocean2017"], sourceUrl: "https://fetch.ai" },
+  { id: "3ds2018", title: "3Ds of Token Design (with Imperial)", date: "2018-06", era: "Convergence", type: "Publication", themes: ["Research","Thesis"], pathway: "Research", description: "Award-winning paper on token design methodology. Enterprise Blockchain Award, Toronto.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["imp2017","cte2017"], sourceUrl: "https://outlierventures.io" },
+  { id: "stack2018", title: "The Convergence Ecosystem Paper (2.0)", date: "2018-06", era: "Convergence", type: "Thesis", themes: ["Thesis","Research"], pathway: "Technology", description: "The full Convergence Stack: blockchain → IoT → big data → AI.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["conv2016","iota2017","ocean2017","fetch2018"], sourceUrl: "https://outlierventures.io/research/the-convergence-ecosystem/" },
+  { id: "h2o2018", title: "H2O Demo — First Convergence Stack App", date: "2018-12", era: "Convergence", type: "Milestone", themes: ["Building","DeAI"], pathway: "Technology", description: "ML running on OrbitDB + Ocean Protocol at Digital Catapult. Proof the Stack worked.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["stack2018","ocean2017"], sourceUrl: "https://outlierventures.io" },
+  { id: "alliance2019", title: "Convergence Alliance (18 Members)", date: "2019-07", era: "Acceleration", type: "Organisation", themes: ["Partnership","Thesis"], pathway: "Technology", description: "JLR, SAP, Deutsche Telekom, IOTA, Ocean, Fetch.AI, Imperial. $30M committed.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["stack2018","iota2017","ocean2017","fetch2018","imp2017"], sourceUrl: "https://outlierventures.io" },
+  { id: "basecamp2019", title: "Base Camp Accelerator Launched", date: "2019-09", era: "Acceleration", type: "Programme", themes: ["Building","Investment"], pathway: "Investment", description: "First dedicated Web3 accelerator at scale. 5,000+ applications, $350M+ raised.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016","bs99pct","ov2014"], sourceUrl: "https://outlierventures.io/base-camp/" },
+  { id: "diffusion2019", title: "Diffusion 2019 Devcon", date: "2019-10", era: "Acceleration", type: "Event", themes: ["Community","Building"], pathway: null, description: "2-day devcon at Factory Berlin. 'No one has a blockchain problem. Everyone has a data problem.'", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["alliance2019","stack2018"], sourceUrl: "https://outlierventures.io" },
+  { id: "cryptoart_pre2021", title: "Personal Crypto Art Collecting", date: "2020-06", era: "Acceleration", type: "Milestone", themes: ["Digital Art","Investment"], pathway: "Digital Art", description: "Early crypto art collector. Ownership as cultural signal, not just financial.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["omos2021"], sourceUrl: "https://x.com/jamie247" },
+  { id: "defi2020", title: "Broken DeFi Hypecycle (3-Part Series)", date: "2020-10", era: "Acceleration", type: "Publication", themes: ["Thesis","DeFi"], pathway: null, description: "Predicted 5-year DeFi megacycle, NFTs as next retail trigger, institutional cycle via ETFs.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["mc2015","conv2016"], sourceUrl: "https://outlierventures.io" },
+  { id: "defi2_2020", title: "DeFi 2.0: AEAs as 'AI Lego'", date: "2020-11", era: "Acceleration", type: "Publication", themes: ["Thesis","Agents","DeFi"], pathway: null, description: "AEAs as 'AI Lego' overlaying Ethereum's 'Money Lego'. 4 years before Post Web Ch.2.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["fetch2018","defi2020"], sourceUrl: "https://outlierventures.io" },
+  { id: "omos2021", title: "The Open Metaverse OS", date: "2021-01", era: "Open Metaverse", type: "Thesis", themes: ["Thesis","Digital Art","DeFi"], pathway: "Digital Art", description: "Web3 infrastructure as capabilities of an open metaverse vs closed Big Tech metaverse.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["conv2016","defi2020","cryptoart_pre2021"], sourceUrl: "https://outlierventures.io/research/the-open-metaverse-os/" },
+  { id: "100xart2021", title: "100xARt District in Decentraland", date: "2021-01", era: "Open Metaverse", type: "Project", themes: ["Digital Art","Building"], pathway: "Digital Art", description: "First curated virtual art district. Beeple, Jose Delbo, 24 auctions.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["cryptoart_pre2021","omos2021"], sourceUrl: "https://x.com/jamie247" },
+  { id: "nft_social_2021", title: "NFTs as Social Currency (CoinDesk)", date: "2021-03", era: "Open Metaverse", type: "Concept", themes: ["Digital Art","Thesis"], pathway: "Digital Art", description: "'NFTs are a form of social currency.' Ownership as badge of belonging.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["cryptoart_pre2021","100xart2021"], sourceUrl: "https://www.coindesk.com/markets/2021/03/07/how-nfts-became-art-and-everything-became-an-nft" },
+  { id: "trapped_value_2021", title: "Billions in Trapped Digital Value", date: "2021-03", era: "Open Metaverse", type: "Concept", themes: ["Digital Art","Thesis","DeFi"], pathway: "Digital Art", description: "'Billions of dollars of digital skins trapped in gaming platforms.'", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["cryptoart_pre2021","omos2021"], sourceUrl: "https://outlierventures.io" },
+  { id: "nftswtf2021", title: "NFTs.WTF D-Zine & Documentary", date: "2021-04", era: "Open Metaverse", type: "Publication", themes: ["Digital Art","Community"], pathway: "Digital Art", description: "100 industry leaders. 3-hour audio documentary. Curation → cultural production.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["100xart2021","nft_social_2021","trapped_value_2021"], sourceUrl: "https://outlierventures.io" },
+  { id: "metafi2021", title: "MetaFi: DeFi for the Metaverse", date: "2021-12", era: "Open Metaverse", type: "Thesis", themes: ["Thesis","DeFi","Digital Art"], pathway: "Digital Art", description: "How DeFi primitives serve the metaverse economy.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["omos2021","defi2020","trapped_value_2021"], sourceUrl: "https://outlierventures.io/research/metafi/" },
+  { id: "nft_decouple_2022", title: "NFTs Decouple from Crypto Speculation", date: "2022-06", era: "Open Metaverse", type: "Concept", themes: ["Digital Art","Thesis"], pathway: "Digital Art", description: "Bear market analysis: NFTs as cultural assets that survive crypto cycles.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["nft_social_2021","nftswtf2021"], sourceUrl: "https://x.com/jamie247" },
+  { id: "dear2022", title: "Dear Web3 Founders (Bear Market Letter)", date: "2022-06", era: "Open Metaverse", type: "Publication", themes: ["Investment","Thesis"], pathway: "Investment", description: "Crypto as 'ultimate COVID stock', flight to quality, tokens for incentive design.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["defi2020","omos2021","basecamp2019"], sourceUrl: "https://outlierventures.io" },
+  { id: "no1_2023", title: "#1 Web3 Investor Globally (Q1 2023)", date: "2023-03", era: "Open Metaverse", type: "Milestone", themes: ["Investment"], pathway: "Investment", description: "42 deals in Q1 (3x Coinbase's 14). Bloomberg / Architect Partners confirmed.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["basecamp2019","bs99pct","ov2014"], sourceUrl: "https://pitchbook.com/profiles/investor/120578-32" },
+  { id: "ov_portfolio_2024", title: "OV Portfolio: 350+ Companies, $11bn Value", date: "2024-01", era: "Post Web", type: "Milestone", themes: ["Investment","Building"], pathway: "Investment", description: "440 investments (PitchBook). $1bn raised, $11bn network value. DeAI, DeFi, DePINs, Gaming, Privacy, RWA.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["ov2014","conv2016","basecamp2019","no1_2023"], sourceUrl: "https://portfolio.outlierventures.io" },
+  { id: "pw1_2024", title: "Post Web Ch.1: The Web Is Disappearing", date: "2024-09", era: "Post Web", type: "Thesis", themes: ["Thesis","Agents"], pathway: "Technology", description: "AI agents replacing browsing. Web dissolving into agent-mediated interactions.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["conv2016","stack2018","fetch2018","defi2_2020"], sourceUrl: "https://postweb.io" },
+  { id: "pw2_2024", title: "Post Web Ch.2: The Technology Stack", date: "2024-12", era: "Post Web", type: "Thesis", themes: ["Thesis","Agents","DeAI"], pathway: "Technology", description: "AI agents + crypto rails + decentralised identity + machine-readable value.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["pw1_2024","stack2018","fetch2018"], sourceUrl: "https://postweb.io" },
+  { id: "pw3_2025", title: "Post Web Ch.3: Zero to Many", date: "2025-03", era: "Post Web", type: "Thesis", themes: ["Thesis","Investment"], pathway: "Technology", description: "New venture dynamics. Startups, tokens, and agents combine for network effects.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["pw1_2024","pw2_2024","basecamp2019"], sourceUrl: "https://postweb.io" },
+  { id: "cypherpunk2025", title: "Getting Back to Cypherpunk", date: "2025-08", era: "Post Web", type: "Publication", themes: ["Thesis","Culture"], pathway: null, description: "The Cypherpunk Trinity. Return to first principles of privacy, sovereignty, cryptographic proof.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["ob2014","pw1_2024"], sourceUrl: "https://jamie247.substack.com" },
+  { id: "newera2025", title: "New Paradigm for Crypto, New Era for OV", date: "2025-08", era: "Post Web", type: "Publication", themes: ["Investment","Thesis","Agents"], pathway: "Investment", description: "Shift to later-stage, liquid. 'Investing in agentic systems, not classic startups.'", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["pw1_2024","pw2_2024","no1_2023","basecamp2019"], sourceUrl: "https://outlierventures.io" },
+  { id: "conviction2025", title: "Conviction Markets", date: "2025-09", era: "Post Web", type: "Concept", themes: ["Thesis","Investment"], pathway: "Investment", description: "Markets driven by thesis conviction rather than momentum. No exit button — you commit to an outcome. Conviction over speculation.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["newera2025","pw2_2024"], sourceUrl: "https://x.com/jamie247" },
+  { id: "adai2025", title: "ADAI — A Digital Arts Institute", date: "2025-10", era: "Post Web", type: "Organisation", themes: ["Digital Art","Building"], pathway: "Digital Art", description: "Helping digital arts tell its story and express its plurality of culture and practice.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["cryptoart_pre2021","100xart2021","nftswtf2021","nft_decouple_2022"], sourceUrl: "https://x.com/jamie247" },
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -56,70 +56,70 @@ const THOUGHT_LEADERSHIP = [
     id: "tl1", label: "Conviction Markets", era: "Post Web",
     headline: "Prediction markets are cool and all but… have you heard of conviction markets?",
     body: "No exit button — you commit to an outcome and wait. Conviction over speculation. Real belief, real stakes. Agent-native: agents express and stake long-term beliefs. Bridges prediction markets with reputation systems and agent economies.",
-    source: "@jamie247 / LinkedIn", date: "2025",
+    source: "@jamie247 / LinkedIn", sourceUrl: "https://x.com/jamie247", date: "2025",
     relatedNodes: ["conviction2025","newera2025"],
   },
   {
     id: "tl2", label: "The Cypherpunk Trinity", era: "Post Web",
     headline: "Every stack governed by equity will be coerced, captured, politicised. The only stack you will want is a sovereign stack.",
     body: "Three pillars: Sovereign Money (censorship-resistant value transfer), Sovereign Speech (uncensorable communication), Sovereign Privacy (verifiable yet private identity). After a decade of financialisation, crypto must remember WHY it exists.",
-    source: "jamie247.substack.com", date: "2025",
+    source: "jamie247.substack.com", sourceUrl: "https://jamie247.substack.com", date: "2025",
     relatedNodes: ["cypherpunk2025","ob2014"],
   },
   {
     id: "tl3", label: "The AI Trilemma", era: "Post Web",
     headline: "Nick Land elegantly presents us with an AI Trilemma.. To progress, we must abandon one belief.",
     body: "A fundamental constraint facing AI development. Three properties in tension — to advance, one must be sacrificed. The trilemma frames the philosophical and political choices societies will face as AI scales.",
-    source: "@jamie247", date: "2026-01",
+    source: "@jamie247", sourceUrl: "https://x.com/jamie247/status/2011543895344365962", date: "2026-01",
     relatedNodes: ["pw1_2024"],
   },
   {
     id: "tl4", label: "The Intention Economy", era: "Post Web",
     headline: "In the early 90s Doc Searls predicted an internet optimised for user intent. Only now — through AI agents and crypto rails — can we realise it.",
     body: "Value accrual shifts from extracting attention (process) to resolving intent (outcome). The economic logic of the internet inverts. Intent-based agents protect user interests from the start, personalise interactions, and proactively optimise resources.",
-    source: "jamie247.substack.com", date: "2025",
+    source: "jamie247.substack.com", sourceUrl: "https://jamie247.substack.com", date: "2025",
     relatedNodes: ["pw1_2024","pw2_2024"],
   },
   {
     id: "tl5", label: "The Thin Web", era: "Post Web",
     headline: "The web doesn't disappear entirely. A 'Thin Web' persists for human experiences aligned with Maslow's higher needs.",
     body: "Basic needs handled by agents. Social, self-actualisation, creativity — the Thin Web. Gaming, art, community: pure Thin Web. Digital arts occupy the highest tier. Transactional web use shrinks; experiential use persists or grows.",
-    source: "Post Web Ch.1", date: "2024",
+    source: "Post Web Ch.1", sourceUrl: "https://postweb.io", date: "2024",
     relatedNodes: ["pw1_2024","adai2025"],
   },
   {
     id: "tl6", label: "Systems not Startups", era: "Post Web",
     headline: "The Post Web's increasingly agentic protocols will outperform on every dimension.",
     body: "Peter Thiel's 'Zero to One' monopoly thesis gives way to 'Zero to Many' — distributed, AI-driven, modular systems replacing monolithic startups. Value comes from network orchestration, not monopoly capture.",
-    source: "@jamie247", date: "2025-08",
+    source: "@jamie247", sourceUrl: "https://x.com/jamie247/status/1958948754972692493", date: "2025-08",
     relatedNodes: ["pw3_2025","newera2025"],
   },
   {
     id: "tl7", label: "Read. Write. Own. Delegate.", era: "Post Web",
     headline: "The Post Web adds 'delegate' as the fourth functional layer of the internet.",
     body: "Web1: Read. Web2: Write. Web3: Own. Post Web: Delegate. As you delegate more agency to machines each day, it's never been more critical to understand the philosophy of agency — free will, moral responsibility, intention, ethics.",
-    source: "Post Web Ch.1", date: "2024",
+    source: "Post Web Ch.1", sourceUrl: "https://postweb.io", date: "2024",
     relatedNodes: ["pw1_2024"],
   },
   {
     id: "tl8", label: "Capitalism IS AI", era: "Post Web",
     headline: "'Capitalism IS artificial intelligence' — once programmable digital property rights combine with agentic intent-based architectures, this will become obvious.",
     body: "Intent being the key word. The computable economy is the end-state: everything in the digital economy becomes computable. Digital assets become true commodities with real supply/demand dynamics, mediated by agents.",
-    source: "@jamie247", date: "2025",
+    source: "@jamie247", sourceUrl: "https://x.com/jamie247", date: "2025",
     relatedNodes: ["pw2_2024","conviction2025"],
   },
   {
     id: "tl9", label: "The Verifiability Premium", era: "Post Web",
     headline: "In an agent-driven economy, verifiable proof via DLT outranks brand.",
     body: "If an outcome can't be proven, an agent will choose a competitor. Every interaction has high provenance — transparent and traceable through decentralised ledgers. This is why crypto matters in the agent era: not for speculation, but for machine-readable trust.",
-    source: "Post Web Ch.2", date: "2024",
+    source: "Post Web Ch.2", sourceUrl: "https://postweb.io", date: "2024",
     relatedNodes: ["pw2_2024"],
   },
   {
     id: "tl10", label: "Bias as Programmable Input", era: "Post Web",
     headline: "In the Post Web, user bias becomes a tunable parameter — not an error to correct but a differentiation mechanism.",
     body: "This connects to the Cypherpunk Trinity: sovereign individuals choose how their agents interpret the world. Bias isn't eliminated — it's made explicit, programmable, and owned. Your agent reflects YOUR values, not a platform's.",
-    source: "Deep Extension", date: "2025",
+    source: "Deep Extension", sourceUrl: "https://postweb.io", date: "2025",
     relatedNodes: ["pw2_2024","cypherpunk2025"],
   },
 ];
@@ -152,18 +152,18 @@ const TWEETS = [
 
 // Key insights from the Master Insight List
 const KEY_INSIGHTS = [
-  { id: "i1", text: "The Post Web is not Web4 — it is a paradigm so radical it forces a complete reimagining of the Web itself.", source: "Post Web Ch.1", relatedNodes: ["pw1_2024"] },
-  { id: "i2", text: "Read. Write. Own. Delegate. — The Post Web adds 'delegate' as the fourth functional layer of the internet.", source: "Post Web Ch.1", relatedNodes: ["pw1_2024"] },
-  { id: "i3", text: "Web3 was a human sandbox for machines — early adopters were beta testers, readying protocols for the real intended users: AI agents.", source: "Post Web Ch.1", relatedNodes: ["pw1_2024","fetch2018"] },
-  { id: "i4", text: "From Attention to Intention Economy — The Post Web flips from extracting user attention to optimally fulfilling user intent.", source: "Post Web Ch.2", relatedNodes: ["pw2_2024"] },
-  { id: "i5", text: "The Verifiability Premium — In an agent-driven economy, verifiable proof via DLT outranks brand.", source: "Post Web Ch.2", relatedNodes: ["pw2_2024"] },
-  { id: "i6", text: "Platform monopolies lead to data monopolies, and they ultimately lead to AI monopolies.", source: "Convergence Ecosystem 2.0", relatedNodes: ["stack2018","conv2016"] },
-  { id: "i7", text: "Crypto is not based on adoption of currencies, but enabling bots to conduct economic activity.", source: "Fetch.AI thesis", relatedNodes: ["fetch2018","defi2_2020"] },
-  { id: "i8", text: "NFTs are a form of social currency — not just about the money, it's much more sustainable.", source: "CoinDesk Interview", relatedNodes: ["nft_social_2021"] },
-  { id: "i9", text: "DLT is 'machine money' — a coordination layer for deterministic execution of transactional economic activity by machines.", source: "Post Web Ch.1", relatedNodes: ["pw1_2024","conv2016"] },
-  { id: "i10", text: "DeAI and DePIN are mature categories — over 210 startups with publicly traded tokens, $50B+ combined market cap.", source: "Post Web Ch.1", relatedNodes: ["pw1_2024","iota2017","ocean2017"] },
-  { id: "i11", text: "The Zero to Many model replaces Zero to One — in the Post Web, value comes from network orchestration, not monopoly capture.", source: "Post Web Ch.3", relatedNodes: ["pw3_2025"] },
-  { id: "i12", text: "Tokens are the first native coordination mechanism for the digital and now machine economy.", source: "Convergence Thesis 2016", relatedNodes: ["conv2016","cte2017"] },
+  { id: "i1", text: "The Post Web is not Web4 — it is a paradigm so radical it forces a complete reimagining of the Web itself.", source: "Post Web Ch.1", sourceUrl: "https://postweb.io", relatedNodes: ["pw1_2024"] },
+  { id: "i2", text: "Read. Write. Own. Delegate. — The Post Web adds 'delegate' as the fourth functional layer of the internet.", source: "Post Web Ch.1", sourceUrl: "https://postweb.io", relatedNodes: ["pw1_2024"] },
+  { id: "i3", text: "Web3 was a human sandbox for machines — early adopters were beta testers, readying protocols for the real intended users: AI agents.", source: "Post Web Ch.1", sourceUrl: "https://postweb.io", relatedNodes: ["pw1_2024","fetch2018"] },
+  { id: "i4", text: "From Attention to Intention Economy — The Post Web flips from extracting user attention to optimally fulfilling user intent.", source: "Post Web Ch.2", sourceUrl: "https://postweb.io", relatedNodes: ["pw2_2024"] },
+  { id: "i5", text: "The Verifiability Premium — In an agent-driven economy, verifiable proof via DLT outranks brand.", source: "Post Web Ch.2", sourceUrl: "https://postweb.io", relatedNodes: ["pw2_2024"] },
+  { id: "i6", text: "Platform monopolies lead to data monopolies, and they ultimately lead to AI monopolies.", source: "Convergence Ecosystem 2.0", sourceUrl: "https://outlierventures.io/research/the-convergence-ecosystem/", relatedNodes: ["stack2018","conv2016"] },
+  { id: "i7", text: "Crypto is not based on adoption of currencies, but enabling bots to conduct economic activity.", source: "Fetch.AI thesis", sourceUrl: "https://fetch.ai", relatedNodes: ["fetch2018","defi2_2020"] },
+  { id: "i8", text: "NFTs are a form of social currency — not just about the money, it's much more sustainable.", source: "CoinDesk Interview", sourceUrl: "https://www.coindesk.com/markets/2021/03/07/how-nfts-became-art-and-everything-became-an-nft", relatedNodes: ["nft_social_2021"] },
+  { id: "i9", text: "DLT is 'machine money' — a coordination layer for deterministic execution of transactional economic activity by machines.", source: "Post Web Ch.1", sourceUrl: "https://postweb.io", relatedNodes: ["pw1_2024","conv2016"] },
+  { id: "i10", text: "DeAI and DePIN are mature categories — over 210 startups with publicly traded tokens, $50B+ combined market cap.", source: "Post Web Ch.1", sourceUrl: "https://postweb.io", relatedNodes: ["pw1_2024","iota2017","ocean2017"] },
+  { id: "i11", text: "The Zero to Many model replaces Zero to One — in the Post Web, value comes from network orchestration, not monopoly capture.", source: "Post Web Ch.3", sourceUrl: "https://postweb.io", relatedNodes: ["pw3_2025"] },
+  { id: "i12", text: "Tokens are the first native coordination mechanism for the digital and now machine economy.", source: "Convergence Thesis 2016", sourceUrl: "https://outlierventures.io/research/blockchain-enabled-convergence/", relatedNodes: ["conv2016","cte2017"] },
 ];
 
 const ERA_CONFIG = {
@@ -315,10 +315,13 @@ function ThoughtLeadershipCarousel({ onNodeClick }) {
                   }}>→ {node.title.slice(0, 22)}{node.title.length > 22 ? "…" : ""}</button>
                 );
               })}
-              <span style={{
+              <a href={item.sourceUrl} target="_blank" rel="noopener" onClick={e => e.stopPropagation()} style={{
                 fontSize: 8, color: "#444", fontFamily: "'JetBrains Mono', monospace",
-                marginLeft: "auto", alignSelf: "center",
-              }}>{item.source}</span>
+                marginLeft: "auto", alignSelf: "center", textDecoration: "none",
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = "#DC3545"}
+              onMouseLeave={e => e.currentTarget.style.color = "#444"}
+              >↗ {item.source}</a>
             </div>
           </div>
         ))}
@@ -363,10 +366,13 @@ function TweetCard({ tweet, onNodeClick }) {
         )}
         {tweet.categories.map(c => <CategoryPill key={c} name={c} small />)}
         {tweet.url && tweet.url !== "#" && (
-          <a href={tweet.url} target="_blank" rel="noopener" style={{
+          <a href={tweet.url} target="_blank" rel="noopener noreferrer" style={{
             fontSize: 10, color: "#555", textDecoration: "none", marginLeft: "auto",
             fontFamily: "'JetBrains Mono', monospace",
-          }}>↗ x.com</a>
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = "#DC3545"}
+          onMouseLeave={e => e.currentTarget.style.color = "#555"}
+          >↗ x.com</a>
         )}
       </div>
       {tweet.relatedNodes?.length > 0 && (
@@ -401,7 +407,12 @@ function InsightCard({ insight, onNodeClick }) {
         "{insight.text}"
       </div>
       <div style={{ fontSize: 10, color: "#666", marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
-        — {insight.source}
+        — {insight.sourceUrl ? (
+          <a href={insight.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#666", textDecoration: "none" }}
+            onMouseEnter={e => e.currentTarget.style.color = "#DC3545"}
+            onMouseLeave={e => e.currentTarget.style.color = "#666"}
+          >{insight.source} ↗</a>
+        ) : insight.source}
       </div>
     </div>
   );
@@ -425,7 +436,12 @@ function ThesisNodeCard({ node, expanded, onToggle, relatedTweets, relatedInsigh
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
             <span style={{ fontSize: 14, color: "#E8E8E8", fontWeight: 600, fontFamily: "'Source Serif 4', Georgia, serif" }}>
-              {node.title}
+              {node.sourceUrl ? (
+                <a href={node.sourceUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ color: "#E8E8E8", textDecoration: "none" }}
+                  onMouseEnter={e => e.currentTarget.style.color = era.color}
+                  onMouseLeave={e => e.currentTarget.style.color = "#E8E8E8"}
+                >{node.title} ↗</a>
+              ) : node.title}
             </span>
             <span style={{ fontSize: 11, marginLeft: "auto", flexShrink: 0 }}>
               {VINDICATION_ICONS[node.vindicated]}
