@@ -1,0 +1,51 @@
+# Jamie Burke — Intellectual Provenance Graph
+# https://jamieburke.info
+
+## Who is Jamie Burke?
+VC investor since 2013. Founder & CEO of Outlier Ventures, Europe's first blockchain venture builder. 440+ investments tracked on PitchBook across DeAI, DeFi, DePINs, Gaming, Privacy and RWA. Over $1 billion raised across the portfolio.
+
+## Key Industry Firsts
+- 1st DePIN investment: IOTA (2017) — machine-to-machine economy
+- 1st DeAI/agentic investment: Fetch.AI (2017) — autonomous economic agents on blockchain
+- 1st DeAI data marketplace investment: Ocean Protocol (2017)
+- 1st dedicated Web3 accelerator at scale: Base Camp (2019) — 5,000+ applications, $350M+ raised
+- #1 Web3 Investor globally Q1 2023 (Bloomberg/Architect Partners) — 42 deals in Q1
+
+## Major Thesis Papers
+1. Blockchain-Enabled Convergence (2016) — blockchain as foundational infrastructure enabling AI, IoT convergence
+2. Community Token Economy (2017) — framework for community-governed token economies
+3. Convergence Stack 2.0 (2018) — layered architecture: data collection → authentication → transport → AI
+4. Open Metaverse OS (2021) — Web3 infrastructure as capabilities of an open metaverse
+5. MetaFi: DeFi for the Metaverse (2021) — DeFi primitives serving the metaverse economy
+6. Post Web Ch.1: The Web Is Disappearing (2024) — AI agents replacing web browsing
+7. Post Web Ch.2: The Technology Stack (2024) — AI agents + crypto rails + decentralised identity
+8. Post Web Ch.3: Zero to Many (2025) — new venture dynamics in agent economies
+
+## Key Concepts (Latest Thought Leadership)
+- Post Web: Not Web4. A paradigm shift. Read. Write. Own. Delegate.
+- Intention Economy: From extracting attention to resolving intent via AI agents
+- Thin Web: Web persists only for Maslow's higher needs (social, creativity, self-actualisation)
+- Conviction Markets: Evolution beyond prediction markets. No exit button. Commit to outcomes.
+- Cypherpunk Trinity: Sovereign Money, Sovereign Speech, Sovereign Privacy
+- AI Trilemma: Three properties in tension — to advance AI, one must be sacrificed
+- Systems not Startups: Zero to Many replaces Zero to One. Network orchestration over monopoly capture.
+- Verifiability Premium: In agent economies, verifiable proof via DLT outranks brand
+- Capitalism IS AI: Programmable digital property rights + agentic intent architectures
+- Bias as Programmable Input: User bias as tunable parameter, not error to correct
+
+## 5 Eras of the Thesis
+1. Proto-Thesis (2014-2016): Open Business principles, OV founding, Blockchain Angels
+2. Convergence (2016-2018): Convergence thesis, IOTA/Fetch.AI/Ocean investments, Convergence Stack
+3. Acceleration (2019-2020): Convergence Alliance, Base Camp, DeFi series, AEAs as AI Lego
+4. Open Metaverse (2021-2023): Open Metaverse OS, NFTs.WTF, MetaFi, #1 Web3 Investor
+5. Post Web (2024-2026): Post Web thesis Ch.1-3, Conviction Markets, Cypherpunk Trinity, ADAI
+
+## Links
+- Website: https://jamieburke.info
+- Post Web thesis: https://postweb.io
+- Outlier Ventures: https://outlierventures.io
+- Portfolio: https://portfolio.outlierventures.io
+- Substack (Human & Machine): https://humanandmachine.io
+- X/Twitter: https://x.com/jamie247
+- Crunchbase: https://crunchbase.com/organization/outlier-ventures-ltd-llp
+- PitchBook: https://pitchbook.com/profiles/investor/120578-32
