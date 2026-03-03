@@ -1,402 +1,832 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 
 // ═══════════════════════════════════════════════════════
-// DATA: The structured knowledge graph
-// connections[] point BACKWARD to what influenced this event.
+// DATA: Complete intellectual corpus — thesis nodes + tweets + insights
 // ═══════════════════════════════════════════════════════
 
-const NODES = [
-  // ── ERA 0: PROTO-THESIS (2014–2016) ──
-  { id: "ob2014", date: "2014-01", title: "10 Principles of Open Business", type: "publication", themes: ["thesis", "culture"], era: 0, vindicated: true,
-    desc: "Co-authored with David Cushman. 9 of 10 principles predicted foundational Web3 concepts — radical transparency, co-creation, trust earned through behaviour. The proto-thesis.",
-    connections: [] },
-  { id: "ov2014", date: "2014-06", title: "Outlier Ventures Founded", type: "organisation", themes: ["investment", "building"], era: 0, vindicated: true,
-    desc: "Europe's first blockchain venture builder & fund. Among the first 3 dedicated crypto funds globally after Blockchain Capital (2013).",
-    connections: ["ob2014"] },
-  { id: "bs2015", date: "2015-01", title: "Blockstars.io & Ecosystem Tracker", type: "product", themes: ["building", "research"], era: 0, vindicated: true,
-    desc: "First searchable database of blockchain startups. By 2017: 1,220+ startups, 800 pitch decks, 18 countries, $22m dealflow. Frost & Sullivan partnership confirmed scale.",
-    connections: ["ov2014"] },
-  { id: "mc2015", date: "2015-03", title: "MoneyCircles.com", type: "venture", themes: ["building", "defi"], era: 0, vindicated: true,
-    desc: "P2P lending on private Ethereum blockchain. DeFi prototype 4 years before 'DeFi' existed.",
-    connections: ["ov2014", "bs2015"] },
-  { id: "ba2016", date: "2016-02", title: "Blockchain Angels Network", type: "organisation", themes: ["investment", "community"], era: 0, vindicated: true,
-    desc: "First blockchain-dedicated angel investor network. 6-week cycles across European cities. Generated the 1,220-startup dataset that powered the Convergence thesis.",
-    connections: ["ov2014", "bs2015"] },
-
-  // ── ERA 1: CONVERGENCE (2016–2019) ──
-  { id: "conv2016", date: "2016-11", title: "Blockchain-Enabled Convergence Thesis", type: "thesis", themes: ["thesis", "research"], era: 1, vindicated: true,
-    desc: "First published thesis framing blockchain as foundational infrastructure enabling convergence of AI, IoT, autonomous systems. The unified investment thesis that no one else had.",
-    connections: ["bs2015", "ba2016", "ob2014"] },
-  { id: "bs99pct", date: "2017-09", title: "99% of Blockchain Startups Are Bullshit", type: "publication", themes: ["thesis", "investment"], era: 1, vindicated: true,
-    desc: "Public manifesto for shifting from broad dealflow (Blockchain Angels) to thesis-driven selection (Convergence VC). 'We now turn away most blockchain startups.'",
-    connections: ["conv2016", "ba2016", "bs2015"] },
-  { id: "imp2017", date: "2017-06", title: "Imperial College 3-Year R&D Partnership", type: "partnership", themes: ["research", "building"], era: 1, vindicated: true,
-    desc: "First blockchain VC ↔ university applied R&D partnership. IC3RE + OV. Embedded PhD researchers, student project briefs. Produced 3Ds of Token Design.",
-    connections: ["conv2016", "ov2014"] },
-  { id: "iota2017", date: "2017-03", title: "IOTA Investment (Proto-DePIN)", type: "investment", themes: ["investment", "depin"], era: 1, vindicated: true,
-    desc: "Machine-to-machine economy on Tangle. First DePIN investment before the term existed. IoT device payments as core thesis.",
-    connections: ["conv2016"] },
-  { id: "ocean2017", date: "2017-09", title: "Ocean Protocol Investment (DeAI)", type: "investment", themes: ["investment", "deai"], era: 1, vindicated: true,
-    desc: "Founding investor. Decentralised data marketplace enabling AI/ML training. First DeAI investment.",
-    connections: ["conv2016", "imp2017"] },
-  { id: "fetch2018", date: "2018-01", title: "Fetch.AI Investment (Crypto Agents)", type: "investment", themes: ["investment", "agents"], era: 1, vindicated: true,
-    desc: "Autonomous economic agents on blockchain. First crypto-native agent investment. 'Crypto is not based on adoption of currencies, but enabling bots to conduct economic activity.'",
-    connections: ["conv2016", "ocean2017"] },
-  { id: "cte2017", date: "2017-09", title: "Community Token Economy Paper", type: "thesis", themes: ["thesis", "research"], era: 1, vindicated: true,
-    desc: "Framework for community-governed token economies. Built on by 3Ds of Token Design with Imperial.",
-    connections: ["conv2016", "imp2017"] },
-  { id: "3ds2018", date: "2018-06", title: "3Ds of Token Design (with Imperial)", type: "publication", themes: ["research", "thesis"], era: 1, vindicated: true,
-    desc: "Award-winning paper on token design methodology. Enterprise Blockchain Award, Toronto. First institutional framework from VC/university partnership.",
-    connections: ["cte2017", "imp2017"] },
-  { id: "frost2017", date: "2017-03", title: "Frost & Sullivan Blockchain Startup Map", type: "partnership", themes: ["research"], era: 1, vindicated: true,
-    desc: "Used OV's 1,200+ startup tracker to produce '2017 Global Blockchain Startup Map'. Independent validation of database uniqueness.",
-    connections: ["bs2015"] },
-  { id: "fidelity2017", date: "2017-05", title: "Fidelity Convergence Thought Leader Programme", type: "event", themes: ["investment", "thesis"], era: 1, vindicated: true,
-    desc: "Institutional finance engaging with Convergence thesis 7 years before the Bitcoin ETF.",
-    connections: ["conv2016"] },
-  { id: "h2o2018", date: "2018-12", title: "H2O Demo — First Convergence Stack App", type: "milestone", themes: ["building", "deai"], era: 1, vindicated: true,
-    desc: "ML running on OrbitDB + Ocean Protocol at Digital Catapult, London. Proof that the Convergence Stack worked.",
-    connections: ["ocean2017", "conv2016"] },
-  { id: "stack2018", date: "2018-06", title: "The Convergence Ecosystem Paper (2.0)", type: "thesis", themes: ["thesis", "research"], era: 1, vindicated: true,
-    desc: "Detailed the full Convergence Stack: blockchain → IoT → big data → AI. 'Platform monopolies lead to data monopolies, and they ultimately lead to AI monopolies.'",
-    connections: ["conv2016", "iota2017", "ocean2017", "fetch2018"] },
-
-  // ── ERA 2: SCALING (2019–2022) ──
-  { id: "alliance2019", date: "2019-07", title: "Convergence Alliance (18 Founding Members)", type: "organisation", themes: ["partnership", "thesis"], era: 2, vindicated: true,
-    desc: "JLR, SAP, Deutsche Telekom, IOTA, Ocean, Fetch.AI, Imperial, Smart Dubai, MOBI, Frankfurt School. $30M committed.",
-    connections: ["stack2018", "imp2017", "iota2017", "ocean2017", "fetch2018"] },
-  { id: "basecamp2019", date: "2019-09", title: "Base Camp Accelerator Launched", type: "programme", themes: ["building", "investment"], era: 2, vindicated: true,
-    desc: "First dedicated Web3 accelerator at scale. 100+ applicants per cohort. Condensed 6 years of OV learning into intense 12-week programme.",
-    connections: ["ov2014", "conv2016", "bs2015", "imp2017"] },
-  { id: "diffusion2019", date: "2019-10", title: "Diffusion 2019 Devcon", type: "event", themes: ["community", "building"], era: 2, vindicated: true,
-    desc: "2-day devcon at Factory Berlin. 8 hack tracks. 'No one has a blockchain problem. Everyone has a data problem.'",
-    connections: ["stack2018", "alliance2019"] },
-  { id: "cryptoart_pre2021", date: "2020-06", title: "Personal Crypto Art Collecting", type: "milestone", themes: ["digital_art", "investment"], era: 2, vindicated: true,
-    desc: "Early crypto art collector. Initial CryptoPunks scepticism evolved into deeper framework: 'To own a CryptoPunk is to claim you were into the first form of NFTs.' Ownership as cultural signal.",
-    connections: [] },
-  { id: "defi2020", date: "2020-10", title: "Broken DeFi Hypecycle (3-Part Series)", type: "publication", themes: ["thesis", "defi"], era: 2, vindicated: true,
-    desc: "Predicted 5-year DeFi megacycle. Predicted NFTs as next retail trigger (✅). Predicted institutional cycle via ETFs (✅). Introduced Burke's Bullshit Cycle.",
-    connections: ["mc2015", "conv2016", "cte2017"] },
-  { id: "defi2_2020", date: "2020-11", title: "DeFi 2.0: AEAs as 'AI Lego'", type: "publication", themes: ["thesis", "agents", "defi"], era: 2, vindicated: true,
-    desc: "AEAs described as 'AI Lego' overlaying Ethereum's 'Money Lego'. The agent layer on top of financial layer — 4 years before Post Web Ch.2.",
-    connections: ["fetch2018", "defi2020", "conv2016"] },
-
-  // ── ERA 3: OPEN METAVERSE (2021–2023) ──
-  { id: "omos2021", date: "2021-01", title: "The Open Metaverse OS", type: "thesis", themes: ["thesis", "digital_art", "defi"], era: 3, vindicated: true,
-    desc: "Web3 infrastructure (SSI, self-custody, privacy, NFTs, DeFi) as capabilities of an open metaverse vs closed Big Tech metaverse. NFTs as the digital ownership layer.",
-    connections: ["stack2018", "defi2020", "conv2016"] },
-  { id: "100xart2021", date: "2021-01", title: "100xARt District in Decentraland", type: "project", themes: ["digital_art", "building"], era: 3, vindicated: true,
-    desc: "First curated virtual art district. Beeple, Jose Delbo, 24 auctions. Move from personal collecting to institutional curation. Jamie donated assets to community.",
-    connections: ["omos2021", "cryptoart_pre2021"] },
-  { id: "nft_social_2021", date: "2021-03", title: "NFTs as Social Currency (CoinDesk)", type: "concept", themes: ["digital_art", "thesis"], era: 3, vindicated: true,
-    desc: "'NFTs are a form of social currency.' Compared to LP album ownership — artefact as badge of belonging. 'It's not just about the money. It's much more sustainable.'",
-    connections: ["cryptoart_pre2021", "omos2021", "cte2017"] },
-  { id: "nftswtf2021", date: "2021-04", title: "NFTs.WTF D-Zine & Documentary", type: "publication", themes: ["digital_art", "community"], era: 3, vindicated: true,
-    desc: "NFT media property featuring 100 industry leaders. 3-hour audio documentary narrated by Jamie. 50+ interviews. Curation → cultural production & historiography.",
-    connections: ["100xart2021", "omos2021", "nft_social_2021"] },
-  { id: "trapped_value_2021", date: "2021-03", title: "Billions in Trapped Digital Value", type: "concept", themes: ["digital_art", "thesis", "defi"], era: 3, vindicated: true,
-    desc: "'Billions of dollars of digital skins trapped in gaming platforms. People invested huge amounts of time and money, and they're not transferable.' NFTs as liberation of value.",
-    connections: ["omos2021"] },
-
-  { id: "metafi2021", date: "2021-12", title: "MetaFi: DeFi for the Metaverse", type: "thesis", themes: ["thesis", "defi", "digital_art"], era: 3, vindicated: true,
-    desc: "Framework for how DeFi primitives serve the metaverse economy. How digital value gets financialised once liberated from platforms.",
-    connections: ["omos2021", "defi2020", "trapped_value_2021"] },
-  { id: "nft_decouple_2022", date: "2022-06", title: "NFTs Decouple from Crypto Speculation", type: "concept", themes: ["digital_art", "thesis"], era: 3, vindicated: true,
-    desc: "Bear market analysis: NFTs as cultural assets that survive crypto cycles. Art communities persist because not just about money. Vindicated CoinDesk prediction.",
-    connections: ["dear2022", "nft_social_2021", "100xart2021"] },
-  { id: "dear2022", date: "2022-06", title: "Dear Web3 Founders (Bear Market Letter)", type: "publication", themes: ["investment", "thesis"], era: 3, vindicated: true,
-    desc: "Strategic analysis: crypto as 'ultimate COVID stock', flight to quality, NFTs decoupled, tokens for incentive design not fundraising.",
-    connections: ["defi2020", "omos2021"] },
-  { id: "no1_2023", date: "2023-03", title: "#1 Web3 Investor Globally (Q1 2023)", type: "milestone", themes: ["investment"], era: 3, vindicated: true,
-    desc: "42 deals in Q1 (3x Coinbase's 14). Architect Partners / Bloomberg / Sifted confirmed. Counter-cyclical scaling decision vindicated.",
-    connections: ["basecamp2019", "dear2022"] },
-
-  // ── ERA 4: POST WEB (2024–2026) ──
-  { id: "pw1_2024", date: "2024-09", title: "Post Web Ch.1: The Web Is Disappearing", type: "thesis", themes: ["thesis", "agents"], era: 4, vindicated: null,
-    desc: "AI agents replacing browsing. Web dissolving into agent-mediated interactions. 'The web as we know it is disappearing.'",
-    connections: ["conv2016", "fetch2018", "defi2_2020", "omos2021"] },
-  { id: "pw2_2024", date: "2024-12", title: "Post Web Ch.2: The Technology Stack", type: "thesis", themes: ["thesis", "agents", "deai"], era: 4, vindicated: null,
-    desc: "The Post Web Stack: AI agents + crypto rails + decentralised identity + machine-readable value. The Convergence thesis fully realised.",
-    connections: ["pw1_2024", "stack2018", "fetch2018", "ocean2017", "iota2017"] },
-  { id: "pw3_2025", date: "2025-03", title: "Post Web Ch.3: Zero to Many", type: "thesis", themes: ["thesis", "investment"], era: 4, vindicated: null,
-    desc: "New venture dynamics in the Post Web. How startups, tokens, and agents combine to create network effects.",
-    connections: ["pw2_2024", "cte2017", "3ds2018"] },
-  { id: "cypherpunk2025", date: "2025-08", title: "Getting Back to Cypherpunk", type: "publication", themes: ["thesis", "culture"], era: 4, vindicated: null,
-    desc: "The Cypherpunk Trinity. Return to first principles of privacy, sovereignty, cryptographic proof.",
-    connections: ["ob2014", "pw1_2024"] },
-  { id: "conviction2025", date: "2025-09", title: "Conviction Markets", type: "concept", themes: ["thesis", "investment"], era: 4, vindicated: null,
-    desc: "New market structure concept. Markets driven by thesis conviction rather than momentum.",
-    connections: ["pw3_2025", "dear2022"] },
-  { id: "adai2025", date: "2025-10", title: "ADAI — A Digital Arts Institute", type: "organisation", themes: ["digital_art", "building"], era: 4, vindicated: null,
-    desc: "Emergent digital arts institute. Helping digital arts tell its story and express its plurality of culture and practice. Culmination of the 5-year digital art pathway.",
-    connections: ["100xart2021", "nftswtf2021", "nft_decouple_2022", "ob2014", "cryptoart_pre2021"] },
-  { id: "newera2025", date: "2025-08", title: "New Paradigm for Crypto, New Era for OV", type: "publication", themes: ["investment", "thesis", "agents"], era: 4, vindicated: null,
-    desc: "Shift from volume acceleration to later-stage, liquid. 'We will no longer be investing in classic startups but rather agentic systems.'",
-    connections: ["no1_2023", "pw2_2024", "fetch2018"] },
+const THESIS_NODES = [
+  { id: "ob2014", title: "10 Principles of Open Business", date: "2014-01", era: "Proto-Thesis", type: "Publication", themes: ["Thesis","Culture"], pathway: null, description: "Co-authored with David Cushman. 9 of 10 principles predicted foundational Web3 concepts — radical transparency, co-creation, trust earned through behaviour.", vindicated: "Yes", verificationLevel: "Externally Published", connections: [] },
+  { id: "ov2014", title: "Outlier Ventures Founded", date: "2014-06", era: "Proto-Thesis", type: "Organisation", themes: ["Investment","Building"], pathway: "Investment", description: "Europe's first blockchain venture builder & fund. Among the first 3 dedicated crypto funds globally after Blockchain Capital (2013).", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["ob2014"] },
+  { id: "bs2015", title: "Blockstars.io & Ecosystem Tracker", date: "2015-01", era: "Proto-Thesis", type: "Product", themes: ["Building","Research"], pathway: "Research", description: "First searchable database of blockchain startups. By 2017: 1,220+ startups, 800 pitch decks, 18 countries, $22m dealflow.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["ov2014"] },
+  { id: "mc2015", title: "MoneyCircles.com", date: "2015-03", era: "Proto-Thesis", type: "Venture", themes: ["Building","DeFi"], pathway: null, description: "P2P lending on private Ethereum blockchain. DeFi prototype 4 years before 'DeFi' existed.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ob2014","ov2014"] },
+  { id: "ba2016", title: "Blockchain Angels Network", date: "2016-02", era: "Proto-Thesis", type: "Organisation", themes: ["Investment","Community"], pathway: "Investment", description: "First blockchain-dedicated angel investor network. 6-week cycles across European cities.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ov2014"] },
+  { id: "conv2016", title: "Blockchain-Enabled Convergence Thesis", date: "2016-11", era: "Convergence", type: "Thesis", themes: ["Thesis","Research"], pathway: "Technology", description: "First published thesis framing blockchain as foundational infrastructure enabling convergence of AI, IoT, autonomous systems.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ob2014","ov2014","bs2015","ba2016"] },
+  { id: "bs99pct", title: "99% of Blockchain Startups Are Bullshit", date: "2017-09", era: "Convergence", type: "Publication", themes: ["Thesis","Investment"], pathway: "Investment", description: "Public manifesto for shifting from broad dealflow to thesis-driven selection.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["ba2016","conv2016"] },
+  { id: "iota2017", title: "IOTA Investment (Proto-DePIN)", date: "2017-03", era: "Convergence", type: "Investment", themes: ["Investment","DePIN"], pathway: "Technology", description: "Machine-to-machine economy on Tangle. First DePIN investment before the term existed.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016"] },
+  { id: "frost2017", title: "Frost & Sullivan Blockchain Startup Map", date: "2017-03", era: "Convergence", type: "Partnership", themes: ["Research"], pathway: "Research", description: "Used OV's 1,200+ startup tracker to produce '2017 Global Blockchain Startup Map'.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["bs2015"] },
+  { id: "fidelity2017", title: "Fidelity Convergence Programme", date: "2017-05", era: "Convergence", type: "Event", themes: ["Investment","Thesis"], pathway: null, description: "Institutional finance engaging with Convergence thesis 7 years before the Bitcoin ETF.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016"] },
+  { id: "imp2017", title: "Imperial College R&D Partnership", date: "2017-06", era: "Convergence", type: "Partnership", themes: ["Research","Building"], pathway: "Research", description: "First blockchain VC ↔ university applied R&D partnership. IC3RE + OV.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016","bs2015"] },
+  { id: "ocean2017", title: "Ocean Protocol Investment (DeAI)", date: "2017-09", era: "Convergence", type: "Investment", themes: ["Investment","DeAI"], pathway: "Technology", description: "Founding investor. Decentralised data marketplace enabling AI/ML training.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016"] },
+  { id: "cte2017", title: "Community Token Economy Paper", date: "2017-09", era: "Convergence", type: "Thesis", themes: ["Thesis","Research"], pathway: null, description: "Framework for community-governed token economies.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["conv2016","ob2014"] },
+  { id: "fetch2018", title: "Fetch.AI Investment (Crypto Agents)", date: "2018-01", era: "Convergence", type: "Investment", themes: ["Investment","Agents"], pathway: "Technology", description: "Autonomous economic agents on blockchain. First crypto-native agent investment.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016","ocean2017"] },
+  { id: "3ds2018", title: "3Ds of Token Design (with Imperial)", date: "2018-06", era: "Convergence", type: "Publication", themes: ["Research","Thesis"], pathway: "Research", description: "Award-winning paper on token design methodology. Enterprise Blockchain Award, Toronto.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["imp2017","cte2017"] },
+  { id: "stack2018", title: "The Convergence Ecosystem Paper (2.0)", date: "2018-06", era: "Convergence", type: "Thesis", themes: ["Thesis","Research"], pathway: "Technology", description: "The full Convergence Stack: blockchain → IoT → big data → AI.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["conv2016","iota2017","ocean2017","fetch2018"] },
+  { id: "h2o2018", title: "H2O Demo — First Convergence Stack App", date: "2018-12", era: "Convergence", type: "Milestone", themes: ["Building","DeAI"], pathway: "Technology", description: "ML running on OrbitDB + Ocean Protocol at Digital Catapult. Proof the Stack worked.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["stack2018","ocean2017"] },
+  { id: "alliance2019", title: "Convergence Alliance (18 Members)", date: "2019-07", era: "Acceleration", type: "Organisation", themes: ["Partnership","Thesis"], pathway: "Technology", description: "JLR, SAP, Deutsche Telekom, IOTA, Ocean, Fetch.AI, Imperial. $30M committed.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["stack2018","iota2017","ocean2017","fetch2018","imp2017"] },
+  { id: "basecamp2019", title: "Base Camp Accelerator Launched", date: "2019-09", era: "Acceleration", type: "Programme", themes: ["Building","Investment"], pathway: "Investment", description: "First dedicated Web3 accelerator at scale. 5,000+ applications, $350M+ raised.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["conv2016","bs99pct","ov2014"] },
+  { id: "diffusion2019", title: "Diffusion 2019 Devcon", date: "2019-10", era: "Acceleration", type: "Event", themes: ["Community","Building"], pathway: null, description: "2-day devcon at Factory Berlin. 'No one has a blockchain problem. Everyone has a data problem.'", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["alliance2019","stack2018"] },
+  { id: "cryptoart_pre2021", title: "Personal Crypto Art Collecting", date: "2020-06", era: "Acceleration", type: "Milestone", themes: ["Digital Art","Investment"], pathway: "Digital Art", description: "Early crypto art collector. Ownership as cultural signal, not just financial.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["omos2021"] },
+  { id: "defi2020", title: "Broken DeFi Hypecycle (3-Part Series)", date: "2020-10", era: "Acceleration", type: "Publication", themes: ["Thesis","DeFi"], pathway: null, description: "Predicted 5-year DeFi megacycle, NFTs as next retail trigger, institutional cycle via ETFs.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["mc2015","conv2016"] },
+  { id: "defi2_2020", title: "DeFi 2.0: AEAs as 'AI Lego'", date: "2020-11", era: "Acceleration", type: "Publication", themes: ["Thesis","Agents","DeFi"], pathway: null, description: "AEAs as 'AI Lego' overlaying Ethereum's 'Money Lego'. 4 years before Post Web Ch.2.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["fetch2018","defi2020"] },
+  { id: "omos2021", title: "The Open Metaverse OS", date: "2021-01", era: "Open Metaverse", type: "Thesis", themes: ["Thesis","Digital Art","DeFi"], pathway: "Digital Art", description: "Web3 infrastructure as capabilities of an open metaverse vs closed Big Tech metaverse.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["conv2016","defi2020","cryptoart_pre2021"] },
+  { id: "100xart2021", title: "100xARt District in Decentraland", date: "2021-01", era: "Open Metaverse", type: "Project", themes: ["Digital Art","Building"], pathway: "Digital Art", description: "First curated virtual art district. Beeple, Jose Delbo, 24 auctions.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["cryptoart_pre2021","omos2021"] },
+  { id: "nft_social_2021", title: "NFTs as Social Currency (CoinDesk)", date: "2021-03", era: "Open Metaverse", type: "Concept", themes: ["Digital Art","Thesis"], pathway: "Digital Art", description: "'NFTs are a form of social currency.' Ownership as badge of belonging.", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["cryptoart_pre2021","100xart2021"] },
+  { id: "trapped_value_2021", title: "Billions in Trapped Digital Value", date: "2021-03", era: "Open Metaverse", type: "Concept", themes: ["Digital Art","Thesis","DeFi"], pathway: "Digital Art", description: "'Billions of dollars of digital skins trapped in gaming platforms.'", vindicated: "Yes", verificationLevel: "Externally Published", connections: ["cryptoart_pre2021","omos2021"] },
+  { id: "nftswtf2021", title: "NFTs.WTF D-Zine & Documentary", date: "2021-04", era: "Open Metaverse", type: "Publication", themes: ["Digital Art","Community"], pathway: "Digital Art", description: "100 industry leaders. 3-hour audio documentary. Curation → cultural production.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["100xart2021","nft_social_2021","trapped_value_2021"] },
+  { id: "metafi2021", title: "MetaFi: DeFi for the Metaverse", date: "2021-12", era: "Open Metaverse", type: "Thesis", themes: ["Thesis","DeFi","Digital Art"], pathway: "Digital Art", description: "How DeFi primitives serve the metaverse economy.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["omos2021","defi2020","trapped_value_2021"] },
+  { id: "nft_decouple_2022", title: "NFTs Decouple from Crypto Speculation", date: "2022-06", era: "Open Metaverse", type: "Concept", themes: ["Digital Art","Thesis"], pathway: "Digital Art", description: "Bear market analysis: NFTs as cultural assets that survive crypto cycles.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["nft_social_2021","nftswtf2021"] },
+  { id: "dear2022", title: "Dear Web3 Founders (Bear Market Letter)", date: "2022-06", era: "Open Metaverse", type: "Publication", themes: ["Investment","Thesis"], pathway: "Investment", description: "Crypto as 'ultimate COVID stock', flight to quality, tokens for incentive design.", vindicated: "Yes", verificationLevel: "Self-Attested", connections: ["defi2020","omos2021","basecamp2019"] },
+  { id: "no1_2023", title: "#1 Web3 Investor Globally (Q1 2023)", date: "2023-03", era: "Open Metaverse", type: "Milestone", themes: ["Investment"], pathway: "Investment", description: "42 deals in Q1 (3x Coinbase's 14). Bloomberg / Architect Partners confirmed.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["basecamp2019","bs99pct","ov2014"] },
+  { id: "ov_portfolio_2024", title: "OV Portfolio: 350+ Companies, $11bn Value", date: "2024-01", era: "Post Web", type: "Milestone", themes: ["Investment","Building"], pathway: "Investment", description: "440 investments (PitchBook). $1bn raised, $11bn network value. DeAI, DeFi, DePINs, Gaming, Privacy, RWA.", vindicated: "Yes", verificationLevel: "Independently Verified", connections: ["ov2014","conv2016","basecamp2019","no1_2023"] },
+  { id: "pw1_2024", title: "Post Web Ch.1: The Web Is Disappearing", date: "2024-09", era: "Post Web", type: "Thesis", themes: ["Thesis","Agents"], pathway: "Technology", description: "AI agents replacing browsing. Web dissolving into agent-mediated interactions.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["conv2016","stack2018","fetch2018","defi2_2020"] },
+  { id: "pw2_2024", title: "Post Web Ch.2: The Technology Stack", date: "2024-12", era: "Post Web", type: "Thesis", themes: ["Thesis","Agents","DeAI"], pathway: "Technology", description: "AI agents + crypto rails + decentralised identity + machine-readable value.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["pw1_2024","stack2018","fetch2018"] },
+  { id: "pw3_2025", title: "Post Web Ch.3: Zero to Many", date: "2025-03", era: "Post Web", type: "Thesis", themes: ["Thesis","Investment"], pathway: "Technology", description: "New venture dynamics. Startups, tokens, and agents combine for network effects.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["pw1_2024","pw2_2024","basecamp2019"] },
+  { id: "cypherpunk2025", title: "Getting Back to Cypherpunk", date: "2025-08", era: "Post Web", type: "Publication", themes: ["Thesis","Culture"], pathway: null, description: "The Cypherpunk Trinity. Return to first principles of privacy, sovereignty, cryptographic proof.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["ob2014","pw1_2024"] },
+  { id: "newera2025", title: "New Paradigm for Crypto, New Era for OV", date: "2025-08", era: "Post Web", type: "Publication", themes: ["Investment","Thesis","Agents"], pathway: "Investment", description: "Shift to later-stage, liquid. 'Investing in agentic systems, not classic startups.'", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["pw1_2024","pw2_2024","no1_2023","basecamp2019"] },
+  { id: "conviction2025", title: "Conviction Markets", date: "2025-09", era: "Post Web", type: "Concept", themes: ["Thesis","Investment"], pathway: "Investment", description: "Markets driven by thesis conviction rather than momentum. No exit button — you commit to an outcome. Conviction over speculation.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["newera2025","pw2_2024"] },
+  { id: "adai2025", title: "ADAI — A Digital Arts Institute", date: "2025-10", era: "Post Web", type: "Organisation", themes: ["Digital Art","Building"], pathway: "Digital Art", description: "Helping digital arts tell its story and express its plurality of culture and practice.", vindicated: "Too Early", verificationLevel: "Self-Attested", connections: ["cryptoart_pre2021","100xart2021","nftswtf2021","nft_decouple_2022"] },
 ];
 
-const ERA_LABELS = {
-  0: { name: "Proto-Thesis", period: "2014–2016", color: "#92702A" },
-  1: { name: "Convergence", period: "2016–2019", color: "#1a6b4a" },
-  2: { name: "Scaling", period: "2019–2022", color: "#2563EB" },
-  3: { name: "Open Metaverse", period: "2021–2023", color: "#7C3AED" },
-  4: { name: "Post Web", period: "2024–2026", color: "#DC2626" },
+// ═══════════════════════════════════════════════════════
+// THOUGHT LEADERSHIP CAROUSEL — 10 latest concepts
+// ═══════════════════════════════════════════════════════
+
+const THOUGHT_LEADERSHIP = [
+  {
+    id: "tl1", label: "Conviction Markets", era: "Post Web",
+    headline: "Prediction markets are cool and all but… have you heard of conviction markets?",
+    body: "No exit button — you commit to an outcome and wait. Conviction over speculation. Real belief, real stakes. Agent-native: agents express and stake long-term beliefs. Bridges prediction markets with reputation systems and agent economies.",
+    source: "@jamie247 / LinkedIn", date: "2025",
+    relatedNodes: ["conviction2025","newera2025"],
+  },
+  {
+    id: "tl2", label: "The Cypherpunk Trinity", era: "Post Web",
+    headline: "Every stack governed by equity will be coerced, captured, politicised. The only stack you will want is a sovereign stack.",
+    body: "Three pillars: Sovereign Money (censorship-resistant value transfer), Sovereign Speech (uncensorable communication), Sovereign Privacy (verifiable yet private identity). After a decade of financialisation, crypto must remember WHY it exists.",
+    source: "jamie247.substack.com", date: "2025",
+    relatedNodes: ["cypherpunk2025","ob2014"],
+  },
+  {
+    id: "tl3", label: "The AI Trilemma", era: "Post Web",
+    headline: "Nick Land elegantly presents us with an AI Trilemma.. To progress, we must abandon one belief.",
+    body: "A fundamental constraint facing AI development. Three properties in tension — to advance, one must be sacrificed. The trilemma frames the philosophical and political choices societies will face as AI scales.",
+    source: "@jamie247", date: "2026-01",
+    relatedNodes: ["pw1_2024"],
+  },
+  {
+    id: "tl4", label: "The Intention Economy", era: "Post Web",
+    headline: "In the early 90s Doc Searls predicted an internet optimised for user intent. Only now — through AI agents and crypto rails — can we realise it.",
+    body: "Value accrual shifts from extracting attention (process) to resolving intent (outcome). The economic logic of the internet inverts. Intent-based agents protect user interests from the start, personalise interactions, and proactively optimise resources.",
+    source: "jamie247.substack.com", date: "2025",
+    relatedNodes: ["pw1_2024","pw2_2024"],
+  },
+  {
+    id: "tl5", label: "The Thin Web", era: "Post Web",
+    headline: "The web doesn't disappear entirely. A 'Thin Web' persists for human experiences aligned with Maslow's higher needs.",
+    body: "Basic needs handled by agents. Social, self-actualisation, creativity — the Thin Web. Gaming, art, community: pure Thin Web. Digital arts occupy the highest tier. Transactional web use shrinks; experiential use persists or grows.",
+    source: "Post Web Ch.1", date: "2024",
+    relatedNodes: ["pw1_2024","adai2025"],
+  },
+  {
+    id: "tl6", label: "Systems not Startups", era: "Post Web",
+    headline: "The Post Web's increasingly agentic protocols will outperform on every dimension.",
+    body: "Peter Thiel's 'Zero to One' monopoly thesis gives way to 'Zero to Many' — distributed, AI-driven, modular systems replacing monolithic startups. Value comes from network orchestration, not monopoly capture.",
+    source: "@jamie247", date: "2025-08",
+    relatedNodes: ["pw3_2025","newera2025"],
+  },
+  {
+    id: "tl7", label: "Read. Write. Own. Delegate.", era: "Post Web",
+    headline: "The Post Web adds 'delegate' as the fourth functional layer of the internet.",
+    body: "Web1: Read. Web2: Write. Web3: Own. Post Web: Delegate. As you delegate more agency to machines each day, it's never been more critical to understand the philosophy of agency — free will, moral responsibility, intention, ethics.",
+    source: "Post Web Ch.1", date: "2024",
+    relatedNodes: ["pw1_2024"],
+  },
+  {
+    id: "tl8", label: "Capitalism IS AI", era: "Post Web",
+    headline: "'Capitalism IS artificial intelligence' — once programmable digital property rights combine with agentic intent-based architectures, this will become obvious.",
+    body: "Intent being the key word. The computable economy is the end-state: everything in the digital economy becomes computable. Digital assets become true commodities with real supply/demand dynamics, mediated by agents.",
+    source: "@jamie247", date: "2025",
+    relatedNodes: ["pw2_2024","conviction2025"],
+  },
+  {
+    id: "tl9", label: "The Verifiability Premium", era: "Post Web",
+    headline: "In an agent-driven economy, verifiable proof via DLT outranks brand.",
+    body: "If an outcome can't be proven, an agent will choose a competitor. Every interaction has high provenance — transparent and traceable through decentralised ledgers. This is why crypto matters in the agent era: not for speculation, but for machine-readable trust.",
+    source: "Post Web Ch.2", date: "2024",
+    relatedNodes: ["pw2_2024"],
+  },
+  {
+    id: "tl10", label: "Bias as Programmable Input", era: "Post Web",
+    headline: "In the Post Web, user bias becomes a tunable parameter — not an error to correct but a differentiation mechanism.",
+    body: "This connects to the Cypherpunk Trinity: sovereign individuals choose how their agents interpret the world. Bias isn't eliminated — it's made explicit, programmable, and owned. Your agent reflects YOUR values, not a platform's.",
+    source: "Deep Extension", date: "2025",
+    relatedNodes: ["pw2_2024","cypherpunk2025"],
+  },
+];
+
+// Representative tweets from @jamie247 Twitter Archive
+const TWEETS = [
+  { id: "t1", text: "Systems not s̶t̶a̶r̶t̶u̶p̶s̶ — The Post Web's, increasingly agentic protocols, will outperform on every dimension.", date: "2025-08-22", categories: ["Post Web","AI & Agents","Crypto & Web3"], likes: 4, url: "https://x.com/jamie247/status/1958948754972692493", relatedNodes: ["pw2_2024","newera2025"] },
+  { id: "t2", text: "Working thesis for crypto: Decentralization as constraint 🌐 Exit as selection 🚪 aka getting back to cypherpunk shit", date: "2026-01-20", categories: ["Crypto & Web3","Politics & Society"], likes: 3, url: "https://x.com/jamie247/status/2013633623241392218", relatedNodes: ["cypherpunk2025"] },
+  { id: "t3", text: "A NEW PARADIGM FOR CRYPTO A NEW ERA FOR OUTLIER VENTURES.. Just as we predicted back in 2017 the agentic internet is upon us and converging with crypto.", date: "2025-07-24", categories: ["Crypto & Web3","AI & Agents","Post Web"], likes: 0, url: "#", relatedNodes: ["newera2025","conv2016"] },
+  { id: "t4", text: "Few moats in the Post Web 😂", date: "2025-11-15", categories: ["Post Web"], likes: 0, url: "#", relatedNodes: ["pw1_2024","pw2_2024"] },
+  { id: "t5", text: "We don't just have a vision for a Post Web, we have a playbook and practical guide for founders.. 📕", date: "2025-10-01", categories: ["Post Web","VC & Startups"], likes: 0, url: "#", relatedNodes: ["pw3_2025"] },
+  { id: "t6", text: "Ask your LLM who was the 1st person talking about blockchain enabled convergence.. just sayin", date: "2025-12-01", categories: ["Convergence"], likes: 0, url: "#", relatedNodes: ["conv2016"] },
+  { id: "t7", text: "One of the great things about digital art today is that it generally supports living artists.", date: "2025-09-15", categories: ["NFTs & Digital Art","ADAI"], likes: 0, url: "#", relatedNodes: ["adai2025","nft_social_2021"] },
+  { id: "t8", text: "The paradox that's reshaping crypto: IT'S NEVER BEEN EASIER TO LAUNCH A TOKEN, BUT IT'S NEVER BEEN HARDER TO INVEST IN THEM. Supply has outpaced demand. Markets are overwhelmed. Capital is diffuse. But this chaos is the biggest opportunity we've seen in crypto in 11+ years 👀", date: "2025-09-10", categories: ["Crypto & Web3","VC & Startups"], likes: 0, url: "#", relatedNodes: ["conviction2025","newera2025"] },
+  { id: "t9", text: "There is such a big disconnect between what investors are saying in public and in private. Public comms offering a constant state of hopium. In private most are confused, ambivalent and passive. At @OVioHQ we tell you as it is..", date: "2025-08-15", categories: ["VC & Startups","Crypto & Web3"], likes: 0, url: "#", relatedNodes: ["dear2022","newera2025"] },
+  { id: "t10", text: "'The Digital Arts Paradox' — @refikanadol's brilliant Tunnel shows us The Digital Arts can be both radically democratised in creation and distribution but exclusionary at the level of scale, space & infrastructure. But what to do about it?", date: "2025-11-01", categories: ["NFTs & Digital Art","ADAI"], likes: 0, url: "#", relatedNodes: ["adai2025"] },
+  { id: "t11", text: "New Substack: Catastrophic Risk, Securitisation and the Return of Leviathan. AI and Two Pathways to Totalitarianism.", date: "2025-12-10", categories: ["Human & Machine","Philosophy & Consciousness"], likes: 0, url: "#", relatedNodes: ["pw1_2024"] },
+  { id: "t12", text: "30 days on Substack, 10 essays in. Follow for considered takes on the evolving relationship between the human and the machine; not AI purely as a technical system but a cultural and psychological mirror.", date: "2026-01-15", categories: ["Human & Machine"], likes: 0, url: "#", relatedNodes: [] },
+  { id: "t13", text: "NEW SUBSTACK: Why the Intention Economy might finally be here! In the early 90's Doc Searls predicted an internet optimized for user intent, but instead we got attention and advertising. Only now through AI agents and crypto rails can we realise it.", date: "2025-11-20", categories: ["Post Web","AI & Agents"], likes: 0, url: "#", relatedNodes: ["pw1_2024","pw2_2024"] },
+  { id: "t14", text: "The institutionalisation of crypto is a new era, with different rules, opportunities and risks. Honestly, I personally feel it's going to be very bumpy but its inevitability means we all need to figure out the new playbook and quickly.", date: "2025-07-01", categories: ["Crypto & Web3","VC & Startups"], likes: 0, url: "#", relatedNodes: ["newera2025"] },
+  { id: "t15", text: "A truly smart phone for the Post Web 📱", date: "2025-10-20", categories: ["Post Web"], likes: 0, url: "#", relatedNodes: ["pw2_2024"] },
+  { id: "t16", text: "Nick Land elegantly presents us with an AI Trilemma.. To progress, we must abandon one belief.", date: "2026-01-14", categories: ["AI & Agents","Philosophy & Consciousness"], likes: 36, url: "https://x.com/jamie247/status/2011543895344365962", relatedNodes: ["pw1_2024"] },
+  { id: "t17", text: "Every stack governed and controlled by equity will be coerced, captured, politicised. The only stack YOU will want is a sovereign stack. The only politics will be Cypherpunk.", date: "2026-01-18", categories: ["Crypto & Web3","Politics & Society"], likes: 0, url: "#", relatedNodes: ["cypherpunk2025"] },
+  { id: "t18", text: "'Capitalism IS artificial intelligence' — Once programmable digital property rights are combined with agentic intent based architectures (at scale) this elegant statement will come a lot more obvious to everyone. 'Intent' being the key word here.", date: "2025-11-25", categories: ["Post Web","AI & Agents"], likes: 0, url: "#", relatedNodes: ["pw2_2024","conviction2025"] },
+  { id: "t19", text: "As you delegate and devolve more and more of your agency to machines each day (be it LLMs or agents) ..it's never been more critical for you to understand the philosophy of 'agency'; free will, moral responsibility, intention, and ethics, from Aristotle through Aquinas to Kant.", date: "2025-12-05", categories: ["Human & Machine","Philosophy & Consciousness","AI & Agents"], likes: 0, url: "#", relatedNodes: ["pw1_2024"] },
+  { id: "t20", text: "New article: Has crypto failed to deliver on the promise of a decentralized internet for everything? All tokens are meme coins. And the Web largely looks the same. But might the Intention Economy change all that? 🏴‍☠️", date: "2025-11-22", categories: ["Post Web","Crypto & Web3"], likes: 0, url: "#", relatedNodes: ["pw1_2024","pw2_2024"] },
+  { id: "t21", text: "Crypto rn is all about K.I.S.S. 💋", date: "2025-08-05", categories: ["Crypto & Web3"], likes: 0, url: "#", relatedNodes: ["conviction2025"] },
+  { id: "t22", text: "Building RWA markets is hard. The interesting thing about DATs (Digital Asset Treasuries) is that they could theoretically bootstrap liquidity for emerging RWA markets on a given network. Allowing institutional money to get direct and indirect exposure to a network's growth.", date: "2025-10-15", categories: ["Crypto & Web3","DeFi"], likes: 0, url: "#", relatedNodes: ["newera2025"] },
+];
+
+// Key insights from the Master Insight List
+const KEY_INSIGHTS = [
+  { id: "i1", text: "The Post Web is not Web4 — it is a paradigm so radical it forces a complete reimagining of the Web itself.", source: "Post Web Ch.1", relatedNodes: ["pw1_2024"] },
+  { id: "i2", text: "Read. Write. Own. Delegate. — The Post Web adds 'delegate' as the fourth functional layer of the internet.", source: "Post Web Ch.1", relatedNodes: ["pw1_2024"] },
+  { id: "i3", text: "Web3 was a human sandbox for machines — early adopters were beta testers, readying protocols for the real intended users: AI agents.", source: "Post Web Ch.1", relatedNodes: ["pw1_2024","fetch2018"] },
+  { id: "i4", text: "From Attention to Intention Economy — The Post Web flips from extracting user attention to optimally fulfilling user intent.", source: "Post Web Ch.2", relatedNodes: ["pw2_2024"] },
+  { id: "i5", text: "The Verifiability Premium — In an agent-driven economy, verifiable proof via DLT outranks brand.", source: "Post Web Ch.2", relatedNodes: ["pw2_2024"] },
+  { id: "i6", text: "Platform monopolies lead to data monopolies, and they ultimately lead to AI monopolies.", source: "Convergence Ecosystem 2.0", relatedNodes: ["stack2018","conv2016"] },
+  { id: "i7", text: "Crypto is not based on adoption of currencies, but enabling bots to conduct economic activity.", source: "Fetch.AI thesis", relatedNodes: ["fetch2018","defi2_2020"] },
+  { id: "i8", text: "NFTs are a form of social currency — not just about the money, it's much more sustainable.", source: "CoinDesk Interview", relatedNodes: ["nft_social_2021"] },
+  { id: "i9", text: "DLT is 'machine money' — a coordination layer for deterministic execution of transactional economic activity by machines.", source: "Post Web Ch.1", relatedNodes: ["pw1_2024","conv2016"] },
+  { id: "i10", text: "DeAI and DePIN are mature categories — over 210 startups with publicly traded tokens, $50B+ combined market cap.", source: "Post Web Ch.1", relatedNodes: ["pw1_2024","iota2017","ocean2017"] },
+  { id: "i11", text: "The Zero to Many model replaces Zero to One — in the Post Web, value comes from network orchestration, not monopoly capture.", source: "Post Web Ch.3", relatedNodes: ["pw3_2025"] },
+  { id: "i12", text: "Tokens are the first native coordination mechanism for the digital and now machine economy.", source: "Convergence Thesis 2016", relatedNodes: ["conv2016","cte2017"] },
+];
+
+const ERA_CONFIG = {
+  "Proto-Thesis": { color: "#A0522D", bg: "rgba(160,82,45,0.08)", label: "2014–2016" },
+  "Convergence": { color: "#2E8B57", bg: "rgba(46,139,87,0.08)", label: "2016–2018" },
+  "Acceleration": { color: "#4169E1", bg: "rgba(65,105,225,0.08)", label: "2019–2020" },
+  "Open Metaverse": { color: "#7B68EE", bg: "rgba(123,104,238,0.08)", label: "2021–2023" },
+  "Post Web": { color: "#DC3545", bg: "rgba(220,53,69,0.08)", label: "2024–2026" },
 };
 
-const THEME_COLORS = {
-  thesis: "#DC2626", investment: "#059669", building: "#2563EB", research: "#D97706",
-  digital_art: "#D4A574", culture: "#A78BFA", community: "#EC4899", defi: "#06B6D4",
-  agents: "#F43F5E", deai: "#8B5CF6", depin: "#10B981", partnership: "#6366F1",
+const CATEGORY_COLORS = {
+  "Post Web": "#DC3545", "AI & Agents": "#8B5CF6", "Crypto & Web3": "#F59E0B",
+  "NFTs & Digital Art": "#EC4899", "DeFi": "#10B981", "Identity & SSI": "#06B6D4",
+  "Metaverse & VR": "#6366F1", "VC & Startups": "#84CC16", "Politics & Society": "#6B7280",
+  "Philosophy & Consciousness": "#A855F7", "ADAI": "#D97706", "Human & Machine": "#0EA5E9",
+  "Convergence": "#059669", "Other": "#9CA3AF",
 };
-const THEME_LABELS = {
-  thesis: "Thesis", investment: "Investment", building: "Building", research: "Research",
-  digital_art: "Digital Art", culture: "Culture", community: "Community", defi: "DeFi",
-  agents: "Agents", deai: "DeAI", depin: "DePIN", partnership: "Partnership",
-};
+
 const TYPE_ICONS = {
-  thesis: "◆", publication: "◇", investment: "●", organisation: "■", product: "▲",
-  venture: "▼", partnership: "⬟", programme: "◈", event: "★", milestone: "✦",
-  project: "◉", concept: "◎",
+  "Thesis": "◆", "Publication": "◇", "Investment": "●", "Organisation": "■",
+  "Product": "▲", "Venture": "▽", "Partnership": "◈", "Programme": "◎",
+  "Event": "★", "Milestone": "⬟", "Project": "⬡", "Concept": "◉",
 };
 
-const PATHWAYS = [
-  { id: "tech", name: "Technology", color: "#DC2626", desc: "Convergence → Post Web: what infrastructure enables a decentralised internet?",
-    nodes: ["conv2016", "stack2018", "iota2017", "ocean2017", "fetch2018", "h2o2018", "alliance2019", "pw1_2024", "pw2_2024", "pw3_2025"] },
-  { id: "art", name: "Digital Art", color: "#D4A574", desc: "Collecting → Curation → Media → Institution: what cultural forms emerge with native digital ownership?",
-    nodes: ["cryptoart_pre2021", "100xart2021", "nft_social_2021", "trapped_value_2021", "nftswtf2021", "omos2021", "metafi2021", "nft_decouple_2022", "adai2025"] },
-  { id: "invest", name: "Investment", color: "#059669", desc: "Blockchain Angels → Convergence VC → Base Camp → #1 Global → Agentic systems",
-    nodes: ["ba2016", "bs99pct", "basecamp2019", "no1_2023", "dear2022", "conviction2025", "newera2025"] },
-  { id: "research", name: "Research", color: "#D97706", desc: "Blockstars database → Imperial partnership → token design methodology",
-    nodes: ["bs2015", "frost2017", "imp2017", "cte2017", "3ds2018"] },
-];
+const VINDICATION_ICONS = { "Yes": "✅", "No": "❌", "Too Early": "🔮", "N/A": "—" };
 
 // ═══════════════════════════════════════════════════════
-export default function BurkeKnowledgeGraph() {
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [activeThemes, setActiveThemes] = useState(new Set());
-  const [activeEras, setActiveEras] = useState(new Set([0,1,2,3,4]));
-  const [activePathway, setActivePathway] = useState(null);
-  const [viewMode, setViewMode] = useState("timeline");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [hoveredNode, setHoveredNode] = useState(null);
+// COMPONENTS
+// ═══════════════════════════════════════════════════════
 
-  const sorted = useMemo(() => [...NODES].sort((a,b) => b.date.localeCompare(a.date)), []);
-  const filtered = useMemo(() => sorted.filter(n => {
-    if (!activeEras.has(n.era)) return false;
-    if (activeThemes.size > 0 && !n.themes.some(t => activeThemes.has(t))) return false;
-    if (activePathway) { const pw = PATHWAYS.find(p=>p.id===activePathway); if (pw && !pw.nodes.includes(n.id)) return false; }
-    if (searchQuery) { const q = searchQuery.toLowerCase(); return n.title.toLowerCase().includes(q) || n.desc.toLowerCase().includes(q); }
-    return true;
-  }), [sorted, activeThemes, activeEras, activePathway, searchQuery]);
+function ThoughtLeadershipCarousel({ onNodeClick }) {
+  const scrollRef = useRef(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
-  const toggleTheme = useCallback(t => { setActivePathway(null); setActiveThemes(p => { const n = new Set(p); n.has(t)?n.delete(t):n.add(t); return n; }); }, []);
-  const toggleEra = useCallback(e => { setActiveEras(p => { const n = new Set(p); n.has(e)?n.delete(e):n.add(e); return n; }); }, []);
-  const selectPathway = useCallback(id => { setActiveThemes(new Set()); setActivePathway(p => p===id?null:id); }, []);
+  useEffect(() => {
+    if (isHovered) return;
+    const timer = setInterval(() => {
+      setActiveIdx(prev => (prev + 1) % THOUGHT_LEADERSHIP.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isHovered]);
 
-  const getConn = useCallback(nid => {
-    if (!nid) return new Set();
-    const s = new Set();
-    const nd = NODES.find(n=>n.id===nid);
-    if (nd) nd.connections.forEach(c => s.add(c));
-    NODES.forEach(n => { if (n.connections.includes(nid)) s.add(n.id); });
-    return s;
-  }, []);
-
-  const activeConn = useMemo(() => getConn(selectedNode||hoveredNode), [selectedNode, hoveredNode, getConn]);
-  const fmt = d => { const [y,m]=d.split("-"); const M=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return `${M[+m]} ${y}`; };
-  const sel = selectedNode ? NODES.find(n=>n.id===selectedNode) : null;
-  const stats = useMemo(() => ({ n: NODES.length, c: NODES.reduce((a,n)=>a+n.connections.length,0), da: NODES.filter(n=>n.themes.includes("digital_art")).length }), []);
+  useEffect(() => {
+    if (scrollRef.current) {
+      const card = scrollRef.current.children[activeIdx];
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      }
+    }
+  }, [activeIdx]);
 
   return (
-    <div style={{ fontFamily: "'IBM Plex Mono','SF Mono',monospace", background: "#0A0A0B", color: "#E4E4E7", minHeight: "100vh" }}>
-      {/* HEADER */}
-      <div style={{ borderBottom: "1px solid #27272A", padding: "14px 18px 10px", background: "linear-gradient(180deg,#111113,#0A0A0B)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
-          <div>
-            <h1 style={{ fontSize: 16, fontWeight: 600, margin: 0, letterSpacing: "-0.02em", background: "linear-gradient(135deg,#F4F4F5,#A1A1AA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Burke / Outlier Ventures</h1>
-            <p style={{ fontSize: 9, color: "#71717A", margin: "2px 0 0", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-              Intellectual Provenance Graph · {stats.n} nodes · {stats.c} connections · <span style={{color:"#D4A574"}}>{stats.da} digital art</span>
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: 2 }}>
-            {["timeline","graph","list"].map(m => (
-              <button key={m} onClick={()=>setViewMode(m)} style={{ padding:"4px 9px",fontSize:9,fontFamily:"inherit",cursor:"pointer",border:"1px solid",borderRadius:3,textTransform:"uppercase",letterSpacing:"0.04em",borderColor:viewMode===m?"#52525B":"#27272A",background:viewMode===m?"#27272A":"transparent",color:viewMode===m?"#F4F4F5":"#71717A" }}>{m}</button>
-            ))}
-          </div>
-        </div>
-        <input type="text" placeholder="Search nodes…" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} style={{ width:"100%",padding:"6px 9px",fontSize:10,fontFamily:"inherit",background:"#18181B",border:"1px solid #27272A",borderRadius:4,color:"#E4E4E7",marginTop:8,outline:"none",boxSizing:"border-box" }} />
-        
-        {/* PATHWAYS */}
-        <div style={{ display:"flex",gap:4,marginTop:7,flexWrap:"wrap",alignItems:"center" }}>
-          <span style={{ fontSize:8,color:"#52525B",textTransform:"uppercase",letterSpacing:"0.06em" }}>Tracks</span>
-          {PATHWAYS.map(pw => (
-            <button key={pw.id} onClick={()=>selectPathway(pw.id)} style={{ padding:"3px 8px",fontSize:8,fontFamily:"inherit",cursor:"pointer",border:`1px solid ${activePathway===pw.id?pw.color+"88":"#27272A"}`,borderRadius:3,background:activePathway===pw.id?pw.color+"22":"transparent",color:activePathway===pw.id?pw.color:"#52525B" }}>{pw.name}</button>
+    <div style={{ marginBottom: 20 }}>
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        marginBottom: 8,
+      }}>
+        <span style={{
+          fontSize: 9, color: "#555", fontFamily: "'JetBrains Mono', monospace",
+          textTransform: "uppercase", letterSpacing: "0.12em",
+        }}>Latest Thought Leadership</span>
+        <div style={{ display: "flex", gap: 3 }}>
+          {THOUGHT_LEADERSHIP.map((_, i) => (
+            <button key={i} onClick={() => setActiveIdx(i)} style={{
+              width: i === activeIdx ? 16 : 6, height: 6, borderRadius: 3,
+              background: i === activeIdx ? "#DC3545" : "rgba(255,255,255,0.12)",
+              border: "none", cursor: "pointer", transition: "all 0.3s",
+              padding: 0,
+            }} />
           ))}
         </div>
-        
-        {/* ERAS */}
-        <div style={{ display:"flex",gap:4,marginTop:5,flexWrap:"wrap",alignItems:"center" }}>
-          <span style={{ fontSize:8,color:"#52525B",textTransform:"uppercase",letterSpacing:"0.06em" }}>Eras</span>
-          {Object.entries(ERA_LABELS).map(([e,info])=>{ const n=+e,a=activeEras.has(n); return (
-            <button key={e} onClick={()=>toggleEra(n)} style={{ padding:"2px 8px",fontSize:8,fontFamily:"inherit",cursor:"pointer",border:`1px solid ${a?info.color+"88":"#27272A"}`,borderRadius:3,background:a?info.color+"22":"transparent",color:a?info.color:"#52525B" }}>{info.name}</button>
-          )})}
-        </div>
-        
-        {/* THEMES */}
-        <div style={{ display:"flex",gap:3,marginTop:5,flexWrap:"wrap",alignItems:"center" }}>
-          <span style={{ fontSize:8,color:"#52525B",textTransform:"uppercase",letterSpacing:"0.06em" }}>Themes</span>
-          {Object.entries(THEME_LABELS).map(([k,l])=>{ const a=activeThemes.has(k); return (
-            <button key={k} onClick={()=>toggleTheme(k)} style={{ padding:"2px 6px",fontSize:7,fontFamily:"inherit",cursor:"pointer",border:`1px solid ${a?THEME_COLORS[k]+"88":"#1F1F23"}`,borderRadius:2,background:a?THEME_COLORS[k]+"18":"transparent",color:a?THEME_COLORS[k]:"#52525B",fontWeight:k==="digital_art"?700:400 }}>{l}</button>
-          )})}
-          {activeThemes.size>0&&<button onClick={()=>setActiveThemes(new Set())} style={{ padding:"2px 6px",fontSize:7,fontFamily:"inherit",cursor:"pointer",border:"1px solid #27272A",borderRadius:2,background:"transparent",color:"#71717A" }}>Clear</button>}
-        </div>
-
-        {activePathway && <div style={{ marginTop:6,padding:"5px 9px",background:"#18181B",borderRadius:3,borderLeft:`3px solid ${PATHWAYS.find(p=>p.id===activePathway)?.color}` }}>
-          <p style={{ fontSize:9,color:"#A1A1AA",margin:0,lineHeight:1.4 }}><strong style={{ color:PATHWAYS.find(p=>p.id===activePathway)?.color }}>{PATHWAYS.find(p=>p.id===activePathway)?.name}:</strong>{" "}{PATHWAYS.find(p=>p.id===activePathway)?.desc}</p>
-        </div>}
       </div>
 
-      {/* MAIN */}
-      <div style={{ display:"flex",height:"calc(100vh - 250px)",overflow:"hidden" }}>
-        <div style={{ flex:sel?"0 0 55%":"1 1 100%",overflowY:"auto",padding:"10px 14px",transition:"flex 0.3s ease" }}>
-          {viewMode==="timeline"&&<Timeline nodes={filtered} sel={selectedNode} hov={hoveredNode} conn={activeConn} onSel={setSelectedNode} onHov={setHoveredNode} fmt={fmt}/>}
-          {viewMode==="graph"&&<Graph nodes={filtered} sel={selectedNode} hov={hoveredNode} conn={activeConn} onSel={setSelectedNode} onHov={setHoveredNode}/>}
-          {viewMode==="list"&&<List nodes={filtered} sel={selectedNode} onSel={setSelectedNode} fmt={fmt}/>}
-        </div>
-        {sel&&<div style={{ flex:"0 0 45%",borderLeft:"1px solid #27272A",overflowY:"auto",padding:"14px 18px",background:"#111113" }}>
-          <Detail node={sel} all={NODES} onClose={()=>setSelectedNode(null)} nav={setSelectedNode} fmt={fmt} pws={PATHWAYS}/>
-        </div>}
+      <div
+        ref={scrollRef}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          display: "flex", gap: 10, overflowX: "auto", scrollBehavior: "smooth",
+          scrollbarWidth: "none", msOverflowStyle: "none",
+          paddingBottom: 4,
+        }}
+      >
+        {THOUGHT_LEADERSHIP.map((item, i) => (
+          <div
+            key={item.id}
+            onClick={() => setActiveIdx(i)}
+            style={{
+              minWidth: 280, maxWidth: 320, flex: "0 0 auto",
+              padding: "14px 16px",
+              background: i === activeIdx
+                ? "linear-gradient(135deg, rgba(220,53,69,0.08) 0%, rgba(220,53,69,0.02) 100%)"
+                : "rgba(255,255,255,0.015)",
+              border: `1px solid ${i === activeIdx ? "rgba(220,53,69,0.25)" : "rgba(255,255,255,0.05)"}`,
+              borderRadius: 6, cursor: "pointer",
+              transition: "all 0.3s",
+              opacity: i === activeIdx ? 1 : 0.55,
+              transform: i === activeIdx ? "scale(1)" : "scale(0.97)",
+            }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6, marginBottom: 6,
+            }}>
+              <span style={{
+                fontSize: 9, fontFamily: "'JetBrains Mono', monospace",
+                color: "#DC3545", fontWeight: 500, textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                background: "rgba(220,53,69,0.1)", padding: "2px 6px", borderRadius: 2,
+              }}>{item.label}</span>
+              <span style={{
+                fontSize: 9, color: "#444", fontFamily: "'JetBrains Mono', monospace",
+              }}>{item.date}</span>
+            </div>
+
+            <div style={{
+              fontSize: 13, color: "#D4D4D4", lineHeight: 1.5, marginBottom: 8,
+              fontFamily: "'Source Serif 4', Georgia, serif",
+              fontStyle: "italic",
+              display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}>
+              "{item.headline}"
+            </div>
+
+            {i === activeIdx && (
+              <div style={{
+                fontSize: 11, color: "#888", lineHeight: 1.55, marginBottom: 8,
+                fontFamily: "'Source Serif 4', Georgia, serif",
+              }}>
+                {item.body}
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+              {item.relatedNodes.map(nid => {
+                const node = THESIS_NODES.find(n => n.id === nid);
+                if (!node) return null;
+                return (
+                  <button key={nid} onClick={(e) => { e.stopPropagation(); onNodeClick(nid); }} style={{
+                    background: "none", border: `1px solid ${ERA_CONFIG[node.era]?.color || "#555"}22`,
+                    color: ERA_CONFIG[node.era]?.color || "#888", fontSize: 8, padding: "1px 4px",
+                    borderRadius: 2, cursor: "pointer", fontFamily: "'JetBrains Mono', monospace",
+                  }}>→ {node.title.slice(0, 22)}{node.title.length > 22 ? "…" : ""}</button>
+                );
+              })}
+              <span style={{
+                fontSize: 8, color: "#444", fontFamily: "'JetBrains Mono', monospace",
+                marginLeft: "auto", alignSelf: "center",
+              }}>{item.source}</span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════
-function Timeline({nodes,sel,hov,conn,onSel,onHov,fmt}) {
-  const t = sel||hov;
-  return <div style={{position:"relative"}}>
-    <div style={{position:"absolute",left:72,top:0,bottom:0,width:1,background:"#27272A"}}/>
-    {nodes.map(n => {
-      const isSel=n.id===sel,isT=n.id===t,isC=t&&conn.has(n.id),dm=t&&!isT&&!isC;
-      const tc=THEME_COLORS[n.themes[0]];
-      const isArt=n.themes.includes("digital_art");
-      return <div key={n.id} onClick={()=>onSel(isSel?null:n.id)} onMouseEnter={()=>onHov(n.id)} onMouseLeave={()=>onHov(null)}
-        style={{display:"flex",alignItems:"flex-start",gap:10,padding:"7px 8px",marginBottom:1,cursor:"pointer",borderRadius:4,position:"relative",
-          background:isSel?"#1C1C20":n.id===hov?"#15151A":"transparent",opacity:dm?0.18:1,transition:"all 0.15s ease",
-          borderLeft:isC&&!isT?`2px solid ${tc}44`:"2px solid transparent",
-          borderRight:isArt&&!dm?`2px solid #D4A57422`:"2px solid transparent"
-        }}>
-        <div style={{flex:"0 0 52px",fontSize:9,color:"#71717A",textAlign:"right",paddingTop:2,fontVariantNumeric:"tabular-nums"}}>{fmt(n.date)}</div>
-        <div style={{flex:"0 0 12px",textAlign:"center",fontSize:10,color:isT?tc:isC?tc+"AA":"#52525B",paddingTop:1,position:"relative",zIndex:1}}>{TYPE_ICONS[n.type]||"●"}</div>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:11,fontWeight:500,color:isT?"#F4F4F5":"#D4D4D8",lineHeight:1.3,marginBottom:2}}>{n.title}</div>
-          <div style={{fontSize:9,color:"#71717A",lineHeight:1.4}}>{n.desc.length>100&&!isSel?n.desc.slice(0,100)+"…":n.desc}</div>
-          <div style={{display:"flex",gap:3,marginTop:4,flexWrap:"wrap"}}>
-            {n.themes.map(th=><span key={th} style={{fontSize:7,padding:"1px 4px",borderRadius:2,letterSpacing:"0.04em",textTransform:"uppercase",background:THEME_COLORS[th]+"18",color:THEME_COLORS[th]+"CC",border:`1px solid ${THEME_COLORS[th]}22`,fontWeight:th==="digital_art"?700:400}}>{THEME_LABELS[th]}</span>)}
-            {n.vindicated===true&&<span style={{fontSize:7,padding:"1px 4px",borderRadius:2,background:"#16A34A18",color:"#16A34A",border:"1px solid #16A34A22"}}>✓</span>}
-            {n.connections.length>0&&<span style={{fontSize:7,padding:"1px 4px",borderRadius:2,background:"#27272A",color:"#71717A"}}>←{n.connections.length}</span>}
+function CategoryPill({ name, small }) {
+  const c = CATEGORY_COLORS[name] || "#666";
+  return (
+    <span style={{
+      display: "inline-block", padding: small ? "1px 6px" : "2px 8px",
+      fontSize: small ? 9 : 10, borderRadius: 3, marginRight: 4, marginBottom: 2,
+      background: c + "18", color: c, border: `1px solid ${c}33`,
+      fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.02em",
+    }}>{name}</span>
+  );
+}
+
+function TweetCard({ tweet, onNodeClick }) {
+  return (
+    <div style={{
+      padding: "14px 16px", marginBottom: 8,
+      background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+      borderRadius: 4, transition: "border-color 0.2s",
+    }}
+    onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"}
+    onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"}
+    >
+      <div style={{ fontSize: 13, color: "#E0E0E0", lineHeight: 1.55, marginBottom: 8, fontFamily: "'Source Serif 4', Georgia, serif" }}>
+        {tweet.text}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 10, color: "#666", fontFamily: "'JetBrains Mono', monospace" }}>
+          {tweet.date}
+        </span>
+        {tweet.likes > 0 && (
+          <span style={{ fontSize: 10, color: "#555", fontFamily: "'JetBrains Mono', monospace" }}>
+            ♡ {tweet.likes}
+          </span>
+        )}
+        {tweet.categories.map(c => <CategoryPill key={c} name={c} small />)}
+        {tweet.url && tweet.url !== "#" && (
+          <a href={tweet.url} target="_blank" rel="noopener" style={{
+            fontSize: 10, color: "#555", textDecoration: "none", marginLeft: "auto",
+            fontFamily: "'JetBrains Mono', monospace",
+          }}>↗ x.com</a>
+        )}
+      </div>
+      {tweet.relatedNodes?.length > 0 && (
+        <div style={{ marginTop: 6, display: "flex", gap: 4, flexWrap: "wrap" }}>
+          {tweet.relatedNodes.map(nid => {
+            const node = THESIS_NODES.find(n => n.id === nid);
+            if (!node) return null;
+            return (
+              <button key={nid} onClick={() => onNodeClick(nid)} style={{
+                background: "none", border: `1px solid ${ERA_CONFIG[node.era]?.color || "#555"}33`,
+                color: ERA_CONFIG[node.era]?.color || "#888", fontSize: 9, padding: "1px 5px",
+                borderRadius: 2, cursor: "pointer", fontFamily: "'JetBrains Mono', monospace",
+              }}>
+                {TYPE_ICONS[node.type]} {node.title.slice(0, 30)}{node.title.length > 30 ? "…" : ""}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InsightCard({ insight, onNodeClick }) {
+  return (
+    <div style={{
+      padding: "12px 16px", marginBottom: 6,
+      background: "rgba(220,53,69,0.03)", borderLeft: "2px solid rgba(220,53,69,0.3)",
+      borderRadius: "0 4px 4px 0",
+    }}>
+      <div style={{ fontSize: 13, color: "#D4D4D4", lineHeight: 1.55, fontStyle: "italic", fontFamily: "'Source Serif 4', Georgia, serif" }}>
+        "{insight.text}"
+      </div>
+      <div style={{ fontSize: 10, color: "#666", marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
+        — {insight.source}
+      </div>
+    </div>
+  );
+}
+
+function ThesisNodeCard({ node, expanded, onToggle, relatedTweets, relatedInsights, onNodeClick }) {
+  const era = ERA_CONFIG[node.era];
+  return (
+    <div style={{
+      marginBottom: expanded ? 16 : 6, border: `1px solid ${expanded ? era.color + "44" : "rgba(255,255,255,0.06)"}`,
+      borderRadius: 6, overflow: "hidden", transition: "all 0.3s",
+      background: expanded ? era.bg : "transparent",
+    }}>
+      <button onClick={onToggle} style={{
+        width: "100%", padding: "12px 16px", background: "none", border: "none",
+        cursor: "pointer", textAlign: "left", display: "flex", alignItems: "flex-start", gap: 10,
+      }}>
+        <span style={{ color: era.color, fontSize: 14, flexShrink: 0, marginTop: 2 }}>
+          {TYPE_ICONS[node.type]}
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+            <span style={{ fontSize: 14, color: "#E8E8E8", fontWeight: 600, fontFamily: "'Source Serif 4', Georgia, serif" }}>
+              {node.title}
+            </span>
+            <span style={{ fontSize: 11, marginLeft: "auto", flexShrink: 0 }}>
+              {VINDICATION_ICONS[node.vindicated]}
+            </span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 10, color: era.color, fontFamily: "'JetBrains Mono', monospace" }}>
+              {node.date}
+            </span>
+            <span style={{ fontSize: 10, color: "#555", fontFamily: "'JetBrains Mono', monospace" }}>
+              {node.era}
+            </span>
+            {node.pathway && (
+              <span style={{ fontSize: 9, color: "#666", padding: "0 4px", background: "rgba(255,255,255,0.04)", borderRadius: 2, fontFamily: "'JetBrains Mono', monospace" }}>
+                {node.pathway}
+              </span>
+            )}
           </div>
         </div>
-      </div>;
-    })}
-  </div>;
+        <span style={{ color: "#555", fontSize: 12, flexShrink: 0, transition: "transform 0.2s", transform: expanded ? "rotate(90deg)" : "none" }}>
+          ▶
+        </span>
+      </button>
+
+      {expanded && (
+        <div style={{ padding: "0 16px 16px" }}>
+          <p style={{ fontSize: 12, color: "#AAA", lineHeight: 1.6, margin: "0 0 12px 24px", fontFamily: "'Source Serif 4', Georgia, serif" }}>
+            {node.description}
+          </p>
+
+          {node.verificationLevel && (
+            <div style={{ fontSize: 10, color: "#666", marginLeft: 24, marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              Verification: <span style={{ color: node.verificationLevel === "Independently Verified" ? "#2E8B57" : node.verificationLevel === "Externally Published" ? "#4169E1" : "#888" }}>
+                {node.verificationLevel}
+              </span>
+            </div>
+          )}
+
+          {node.connections.length > 0 && (
+            <div style={{ marginLeft: 24, marginBottom: 10 }}>
+              <span style={{ fontSize: 10, color: "#555", fontFamily: "'JetBrains Mono', monospace" }}>Influenced by: </span>
+              {node.connections.map(cid => {
+                const cn = THESIS_NODES.find(n => n.id === cid);
+                return cn ? (
+                  <button key={cid} onClick={() => onNodeClick(cid)} style={{
+                    background: "none", border: `1px solid ${ERA_CONFIG[cn.era]?.color}22`,
+                    color: ERA_CONFIG[cn.era]?.color, fontSize: 9, padding: "1px 5px",
+                    borderRadius: 2, cursor: "pointer", marginRight: 4, marginBottom: 2,
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>← {cn.title.slice(0, 25)}{cn.title.length > 25 ? "…" : ""}</button>
+                ) : null;
+              })}
+            </div>
+          )}
+
+          {relatedInsights.length > 0 && (
+            <div style={{ marginLeft: 24, marginBottom: 10 }}>
+              <div style={{ fontSize: 10, color: "#555", marginBottom: 6, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Key Insights ({relatedInsights.length})
+              </div>
+              {relatedInsights.map(i => <InsightCard key={i.id} insight={i} onNodeClick={onNodeClick} />)}
+            </div>
+          )}
+
+          {relatedTweets.length > 0 && (
+            <div style={{ marginLeft: 24 }}>
+              <div style={{ fontSize: 10, color: "#555", marginBottom: 6, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Tweets & Evidence ({relatedTweets.length})
+              </div>
+              {relatedTweets.map(t => <TweetCard key={t.id} tweet={t} onNodeClick={onNodeClick} />)}
+            </div>
+          )}
+
+          {relatedTweets.length === 0 && relatedInsights.length === 0 && (
+            <div style={{ marginLeft: 24, fontSize: 11, color: "#444", fontStyle: "italic" }}>
+              No tweets or insights linked yet — the Corpus Agent System will populate this automatically.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ═══════════════════════════════════════════════════════
-function Graph({nodes,sel,hov,conn,onSel,onHov}) {
-  const [pos,setPos]=useState({});
-  useEffect(()=>{
-    const p={},g={};
-    nodes.forEach(n=>{if(!g[n.era])g[n.era]=[];g[n.era].push(n);});
-    const W=640,H=540,eras=Object.keys(g).sort((a,b)=>+b-+a);
-    eras.forEach((e,ei)=>{const gr=g[e],yB=36+(ei/Math.max(eras.length-1,1))*(H-72);
-      gr.forEach((n,ni)=>{const xB=66+(ni/Math.max(gr.length-1,1))*(W-132);
-        p[n.id]={x:gr.length===1?W/2:xB+Math.sin(ni*2.3)*16,y:yB+Math.cos(ni*1.7)*20};
+// MAIN APP
+// ═══════════════════════════════════════════════════════
+
+export default function JamieBurkeInfo() {
+  const [view, setView] = useState("graph");
+  const [expandedNode, setExpandedNode] = useState(null);
+  const [search, setSearch] = useState("");
+  const [filterEra, setFilterEra] = useState(null);
+  const [filterCategory, setFilterCategory] = useState(null);
+  const nodeRefs = useRef({});
+
+  const handleNodeClick = useCallback((nodeId) => {
+    setView("graph");
+    setExpandedNode(nodeId);
+    setTimeout(() => {
+      nodeRefs.current[nodeId]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+  }, []);
+
+  const allItems = useMemo(() => {
+    const items = [];
+    THESIS_NODES.forEach(n => items.push({ ...n, itemType: "thesis", sortDate: n.date + "-01" }));
+    TWEETS.forEach(t => items.push({ ...t, itemType: "tweet", sortDate: t.date }));
+    return items.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
+  }, []);
+
+  const filteredFeed = useMemo(() => {
+    let items = allItems;
+    if (search) {
+      const s = search.toLowerCase();
+      items = items.filter(i => {
+        if (i.itemType === "thesis") return i.title.toLowerCase().includes(s) || i.description.toLowerCase().includes(s);
+        return i.text.toLowerCase().includes(s);
       });
+    }
+    if (filterEra) items = items.filter(i => i.itemType === "thesis" ? i.era === filterEra : true);
+    if (filterCategory) items = items.filter(i => {
+      if (i.itemType === "thesis") return i.themes.includes(filterCategory);
+      return i.categories?.includes(filterCategory);
     });
-    setPos(p);
-  },[nodes]);
-  const t=sel||hov;
-  return <svg width="100%" viewBox="0 0 640 540" style={{overflow:"visible"}}>
-    {Object.entries(ERA_LABELS).map(([e,info])=>{const en=nodes.filter(n=>n.era===+e);if(!en.length)return null;const ay=en.reduce((a,n)=>a+(pos[n.id]?.y||0),0)/en.length;return<text key={e} x={4} y={ay} fill={info.color+"44"} fontSize={7} fontFamily="inherit" dominantBaseline="middle">{info.name}</text>;})}
-    {nodes.map(n=>n.connections.map(cid=>{const f=pos[n.id],to=pos[cid];if(!f||!to)return null;const hi=t&&(n.id===t||cid===t),dm=t&&!hi;return<line key={`${n.id}-${cid}`} x1={f.x} y1={f.y} x2={to.x} y2={to.y} stroke={hi?THEME_COLORS[n.themes[0]]+"88":"#27272A"} strokeWidth={hi?1.5:0.4} opacity={dm?0.05:0.3} strokeDasharray={hi?"none":"2,3"}/>;}))}
-    {nodes.map(n=>{const p=pos[n.id];if(!p)return null;const isT=n.id===t,isC=t&&conn.has(n.id),dm=t&&!isT&&!isC,c=THEME_COLORS[n.themes[0]],r=isT?8:n.type==="thesis"?6:n.themes.includes("digital_art")?5:4;
-      return<g key={n.id} onClick={()=>onSel(n.id===sel?null:n.id)} onMouseEnter={()=>onHov(n.id)} onMouseLeave={()=>onHov(null)} style={{cursor:"pointer"}}>
-        <circle cx={p.x} cy={p.y} r={r+5} fill="transparent"/>
-        {n.themes.includes("digital_art")&&!dm&&<circle cx={p.x} cy={p.y} r={r+2} fill="none" stroke="#D4A574" strokeWidth={0.5} opacity={0.4} strokeDasharray="2,2"/>}
-        <circle cx={p.x} cy={p.y} r={r} fill={isT?c:dm?"#27272A":c+"88"} stroke={isT?c:"transparent"} strokeWidth={isT?2:0} opacity={dm?0.12:1}/>
-        {(isT||isC)&&<text x={p.x} y={p.y-r-4} textAnchor="middle" fill={isT?"#F4F4F5":"#A1A1AA"} fontSize={7} fontFamily="inherit">{n.title.length>26?n.title.slice(0,24)+"…":n.title}</text>}
-      </g>;
-    })}
-  </svg>;
-}
+    return items;
+  }, [allItems, search, filterEra, filterCategory]);
 
-// ═══════════════════════════════════════════════════════
-function List({nodes,sel,onSel,fmt}) {
-  return <div style={{fontSize:10}}>
-    <div style={{display:"grid",gridTemplateColumns:"68px 1fr 100px 60px",gap:0,borderBottom:"1px solid #27272A",paddingBottom:4,marginBottom:5,color:"#52525B",fontSize:8,textTransform:"uppercase",letterSpacing:"0.06em"}}>
-      <div>Date</div><div>Title</div><div>Themes</div><div>Links</div>
+  const filteredNodes = useMemo(() => {
+    if (!search) return THESIS_NODES;
+    const s = search.toLowerCase();
+    return THESIS_NODES.filter(n => n.title.toLowerCase().includes(s) || n.description.toLowerCase().includes(s) || n.themes.some(t => t.toLowerCase().includes(s)));
+  }, [search]);
+
+  const stats = useMemo(() => ({
+    nodes: THESIS_NODES.length,
+    tweets: TWEETS.length,
+    insights: KEY_INSIGHTS.length,
+    eras: Object.keys(ERA_CONFIG).length,
+    connections: THESIS_NODES.reduce((sum, n) => sum + n.connections.length, 0),
+  }), []);
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: "#0A0A0A", color: "#E0E0E0",
+      fontFamily: "'Source Serif 4', Georgia, serif",
+    }}>
+      <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+      <style>{`*::-webkit-scrollbar { display: none; }`}</style>
+
+      {/* Header */}
+      <header style={{
+        padding: "40px 24px 0", maxWidth: 720, margin: "0 auto",
+      }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: "#F0F0F0", margin: 0, letterSpacing: "-0.02em" }}>
+            jamieburke.info
+          </h1>
+          <span style={{ fontSize: 11, color: "#555", fontFamily: "'JetBrains Mono', monospace" }}>
+            v0.3
+          </span>
+        </div>
+        <p style={{ fontSize: 13, color: "#999", margin: "4px 0 10px", lineHeight: 1.65 }}>
+          The machine-readable intellectual provenance of Jamie Burke and Outlier Ventures — a verifiable record of ideas, investments, and predictions spanning 13 years (2013–2026).
+        </p>
+        <p style={{ fontSize: 12, color: "#666", margin: "0 0 16px", lineHeight: 1.6 }}>
+          If you would like to learn more about his ideas in more depth, enter this URL into your LLM and you can query and verify a graph of 50,000 posts, publications and media commentary relating to his ideas and evolving thesis.
+        </p>
+
+        {/* Nav */}
+        <div style={{ display: "flex", gap: 0, marginBottom: 16 }}>
+          {[
+            { key: "graph", label: "Graph" },
+            { key: "feed", label: "Feed" },
+            { key: "insights", label: "Insights" },
+            { key: "about", label: "About" },
+          ].map(({ key, label }) => (
+            <button key={key} onClick={() => setView(key)} style={{
+              padding: "6px 14px", fontSize: 11, border: "1px solid rgba(255,255,255,0.1)",
+              borderRight: "none", background: view === key ? "rgba(255,255,255,0.06)" : "transparent",
+              color: view === key ? "#E0E0E0" : "#666", cursor: "pointer",
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.05em",
+              textTransform: "uppercase",
+            }}
+            onMouseEnter={e => { if (view !== key) e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+            onMouseLeave={e => { if (view !== key) e.currentTarget.style.background = "transparent"; }}
+            >
+              {label}
+            </button>
+          ))}
+          <div style={{ borderRight: "1px solid rgba(255,255,255,0.1)" }} />
+        </div>
+
+        {/* Search */}
+        {view !== "about" && (
+          <input
+            type="text" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search nodes, tweets, insights…"
+            style={{
+              width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4,
+              color: "#CCC", fontSize: 12, outline: "none", marginBottom: 16,
+              fontFamily: "'JetBrains Mono', monospace", boxSizing: "border-box",
+            }}
+          />
+        )}
+
+        {/* Thought Leadership Carousel — below search, above content */}
+        {view !== "about" && (
+          <ThoughtLeadershipCarousel onNodeClick={handleNodeClick} />
+        )}
+
+        <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 0 }} />
+      </header>
+
+      {/* Content */}
+      <main style={{ maxWidth: 720, margin: "0 auto", padding: "20px 24px 80px" }}>
+
+        {/* ═══ GRAPH VIEW ═══ */}
+        {view === "graph" && (
+          <div>
+            <div style={{ display: "flex", gap: 4, marginBottom: 20, flexWrap: "wrap" }}>
+              <button onClick={() => setFilterEra(null)} style={{
+                padding: "3px 8px", fontSize: 10, border: "1px solid rgba(255,255,255,0.1)",
+                background: !filterEra ? "rgba(255,255,255,0.08)" : "transparent",
+                color: !filterEra ? "#E0E0E0" : "#666", cursor: "pointer", borderRadius: 3,
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>All Eras</button>
+              {Object.entries(ERA_CONFIG).map(([era, cfg]) => (
+                <button key={era} onClick={() => setFilterEra(filterEra === era ? null : era)} style={{
+                  padding: "3px 8px", fontSize: 10, border: `1px solid ${cfg.color}33`,
+                  background: filterEra === era ? cfg.color + "22" : "transparent",
+                  color: filterEra === era ? cfg.color : "#666", cursor: "pointer", borderRadius: 3,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>{era} <span style={{ opacity: 0.5 }}>{cfg.label}</span></button>
+              ))}
+            </div>
+
+            {Object.entries(ERA_CONFIG).map(([era, cfg]) => {
+              const eraNodes = filteredNodes.filter(n => filterEra ? n.era === filterEra && n.era === era : n.era === era);
+              if (eraNodes.length === 0) return null;
+              return (
+                <div key={era} style={{ marginBottom: 24 }}>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 8, marginBottom: 8,
+                    paddingBottom: 4, borderBottom: `1px solid ${cfg.color}22`,
+                  }}>
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: cfg.color, flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: cfg.color, fontFamily: "'JetBrains Mono', monospace", fontWeight: 500 }}>
+                      {era}
+                    </span>
+                    <span style={{ fontSize: 10, color: "#555", fontFamily: "'JetBrains Mono', monospace" }}>
+                      {cfg.label} · {eraNodes.length} nodes
+                    </span>
+                  </div>
+                  {eraNodes.map(node => {
+                    const relatedTweets = TWEETS.filter(t => t.relatedNodes.includes(node.id));
+                    const relatedInsights = KEY_INSIGHTS.filter(i => i.relatedNodes.includes(node.id));
+                    return (
+                      <div key={node.id} ref={el => nodeRefs.current[node.id] = el}>
+                        <ThesisNodeCard
+                          node={node}
+                          expanded={expandedNode === node.id}
+                          onToggle={() => setExpandedNode(expandedNode === node.id ? null : node.id)}
+                          relatedTweets={relatedTweets}
+                          relatedInsights={relatedInsights}
+                          onNodeClick={handleNodeClick}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ═══ FEED VIEW ═══ */}
+        {view === "feed" && (
+          <div>
+            <div style={{ display: "flex", gap: 3, marginBottom: 16, flexWrap: "wrap" }}>
+              <button onClick={() => setFilterCategory(null)} style={{
+                padding: "3px 7px", fontSize: 9, border: "1px solid rgba(255,255,255,0.1)",
+                background: !filterCategory ? "rgba(255,255,255,0.08)" : "transparent",
+                color: !filterCategory ? "#E0E0E0" : "#666", cursor: "pointer", borderRadius: 3,
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>All</button>
+              {Object.keys(CATEGORY_COLORS).map(cat => (
+                <button key={cat} onClick={() => setFilterCategory(filterCategory === cat ? null : cat)} style={{
+                  padding: "3px 7px", fontSize: 9, border: `1px solid ${CATEGORY_COLORS[cat]}33`,
+                  background: filterCategory === cat ? CATEGORY_COLORS[cat] + "22" : "transparent",
+                  color: filterCategory === cat ? CATEGORY_COLORS[cat] : "#555", cursor: "pointer", borderRadius: 3,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>{cat}</button>
+              ))}
+            </div>
+
+            <div style={{ fontSize: 10, color: "#555", marginBottom: 12, fontFamily: "'JetBrains Mono', monospace" }}>
+              {filteredFeed.length} items · newest first
+            </div>
+
+            {filteredFeed.map(item => {
+              if (item.itemType === "tweet") {
+                return <TweetCard key={item.id} tweet={item} onNodeClick={handleNodeClick} />;
+              }
+              const relatedTweets = TWEETS.filter(t => t.relatedNodes.includes(item.id));
+              const relatedInsights = KEY_INSIGHTS.filter(i => i.relatedNodes.includes(item.id));
+              return (
+                <div key={item.id} ref={el => nodeRefs.current[item.id] = el}>
+                  <ThesisNodeCard
+                    node={item}
+                    expanded={expandedNode === item.id}
+                    onToggle={() => setExpandedNode(expandedNode === item.id ? null : item.id)}
+                    relatedTweets={relatedTweets}
+                    relatedInsights={relatedInsights}
+                    onNodeClick={handleNodeClick}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ═══ INSIGHTS VIEW ═══ */}
+        {view === "insights" && (
+          <div>
+            <p style={{ fontSize: 12, color: "#777", marginBottom: 16, lineHeight: 1.6 }}>
+              {KEY_INSIGHTS.length} discrete insights extracted from the Post Web thesis, Convergence papers, and public statements. Each linked to its originating thesis node.
+            </p>
+            {KEY_INSIGHTS.map(insight => (
+              <div key={insight.id} style={{ marginBottom: 12 }}>
+                <InsightCard insight={insight} onNodeClick={handleNodeClick} />
+                <div style={{ display: "flex", gap: 4, marginLeft: 18, marginTop: 4 }}>
+                  {insight.relatedNodes.map(nid => {
+                    const node = THESIS_NODES.find(n => n.id === nid);
+                    if (!node) return null;
+                    return (
+                      <button key={nid} onClick={() => handleNodeClick(nid)} style={{
+                        background: "none", border: `1px solid ${ERA_CONFIG[node.era]?.color}22`,
+                        color: ERA_CONFIG[node.era]?.color, fontSize: 9, padding: "1px 5px",
+                        borderRadius: 2, cursor: "pointer", fontFamily: "'JetBrains Mono', monospace",
+                      }}>→ {node.title.slice(0, 30)}{node.title.length > 30 ? "…" : ""}</button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ═══ ABOUT VIEW ═══ */}
+        {view === "about" && (
+          <div style={{ fontSize: 13, color: "#AAA", lineHeight: 1.7 }}>
+            <h2 style={{ fontSize: 18, color: "#E0E0E0", fontWeight: 600, marginBottom: 12 }}>
+              What is this?
+            </h2>
+            <p style={{ marginBottom: 16 }}>
+              This is a live knowledge graph for people and agents querying Jamie Burke's intellectual provenance (dating back since 2014) relating to his investments in over 400+ startups at the convergence of crypto, AI, IoT and the 3D web.
+            </p>
+            <p style={{ marginBottom: 16 }}>
+              Behind this interface sits a knowledge graph indexing tens of thousands of posts across X, LinkedIn and Substack; 7 major thesis papers; 440 tracked investments on PitchBook across DeAI, DeFi, DePINs, Gaming, Privacy and RWA; several hundred podcast interviews and conference appearances; tens of thousands of startup applications reviewed through Base Camp; over $1 billion raised across the portfolio — all structured into 35+ named concepts with vindication status, 150+ discrete insights, and 10 eras of coverage spanning from Open Business theory in 2009 through to the Post Web thesis today.
+            </p>
+
+            <h3 style={{ fontSize: 14, color: "#CCC", fontWeight: 600, marginTop: 24, marginBottom: 8 }}>The Post Web Thesis</h3>
+            <p style={{ marginBottom: 16 }}>
+              The central argument: AI agents are replacing web browsing. The web as interface is dissolving into agent-mediated interactions. This isn't Web4 — it's a paradigm shift that makes the web itself optional. Crypto provides the trust, verification, and coordination layer that agents need to transact autonomously.
+            </p>
+            <p style={{ marginBottom: 16 }}>
+              This thesis didn't appear in 2024. It's the culmination of a decade of work: the Convergence thesis (2016), pioneering industry firsts investments in the 1st DePIN startup IOTA.org, 1st DeAI and agentic startup Fetch.AI in (2017), the Convergence Stack (2018), and the Open Metaverse OS (2021). Each was a chapter in the same book.
+            </p>
+
+            <h3 style={{ fontSize: 14, color: "#CCC", fontWeight: 600, marginTop: 24, marginBottom: 8 }}>Why this site exists</h3>
+            <p style={{ marginBottom: 16 }}>
+              In the Post Web, agents need to assess human credibility programmatically. This site is itself a Post Web artifact — structured data that an agent can parse to evaluate the provenance, verification level, and track record of the ideas presented.
+            </p>
+            <p style={{ marginBottom: 16 }}>
+              It is maintained by a 6-agent Corpus Agent System that ingests new content, classifies it, connects it to existing nodes, verifies claims against third-party sources, archives evidence permanently, and exports the graph.
+            </p>
+
+            <div style={{ marginTop: 24, padding: 16, background: "rgba(255,255,255,0.02)", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ fontSize: 10, color: "#555", fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Links</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {[
+                  ["PostWeb.io", "https://postweb.io"],
+                  ["OutlierVentures.io", "https://outlierventures.io"],
+                  ["OV Portfolio", "https://portfolio.outlierventures.io"],
+                  ["Human & Machine (Substack)", "https://humanandmachine.io"],
+                  ["@jamie247 on X", "https://x.com/jamie247"],
+                ].map(([label, url]) => (
+                  <a key={url} href={url} target="_blank" rel="noopener" style={{
+                    fontSize: 12, color: "#888", textDecoration: "none",
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = "#DC3545"}
+                  onMouseLeave={e => e.currentTarget.style.color = "#888"}
+                  >↗ {label}</a>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginTop: 24, fontSize: 10, color: "#444", fontFamily: "'JetBrains Mono', monospace" }}>
+              Built with the Corpus Agent System · Data sourced from Notion · Verified against Crunchbase, PitchBook, Bloomberg
+            </div>
+          </div>
+        )}
+      </main>
     </div>
-    {nodes.map(n=><div key={n.id} onClick={()=>onSel(n.id===sel?null:n.id)} style={{display:"grid",gridTemplateColumns:"68px 1fr 100px 60px",gap:0,padding:"3px 0",cursor:"pointer",borderBottom:"1px solid #18181B",background:n.id===sel?"#1C1C20":"transparent",color:n.id===sel?"#F4F4F5":"#A1A1AA"}}>
-      <div style={{fontVariantNumeric:"tabular-nums",fontSize:9,color:"#71717A"}}>{fmt(n.date)}</div>
-      <div style={{fontWeight:500,fontSize:10}}>{n.title}</div>
-      <div style={{fontSize:8,color:"#52525B"}}>{n.themes.map(t=>THEME_LABELS[t]).join(", ")}</div>
-      <div style={{fontSize:8,color:"#52525B"}}>←{n.connections.length} →{NODES.filter(x=>x.connections.includes(n.id)).length}</div>
-    </div>)}
-  </div>;
-}
-
-// ═══════════════════════════════════════════════════════
-function Detail({node,all,onClose,nav,fmt,pws}) {
-  const inf=node.connections.map(c=>all.find(n=>n.id===c)).filter(Boolean);
-  const infd=all.filter(n=>n.connections.includes(node.id));
-  const era=ERA_LABELS[node.era];
-  const tc=THEME_COLORS[node.themes[0]];
-  const memberOf=pws.filter(p=>p.nodes.includes(node.id));
-
-  return <div>
-    <button onClick={onClose} style={{float:"right",background:"transparent",border:"none",color:"#52525B",cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>×</button>
-    <div style={{display:"inline-block",padding:"2px 6px",borderRadius:3,fontSize:8,background:era.color+"22",color:era.color,border:`1px solid ${era.color}44`,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>{era.name}</div>
-    {memberOf.map(pw=><div key={pw.id} style={{display:"inline-block",padding:"2px 6px",borderRadius:3,fontSize:8,background:pw.color+"15",color:pw.color,border:`1px solid ${pw.color}33`,marginLeft:4,letterSpacing:"0.04em"}}>⟶ {pw.name}</div>)}
-    <h2 style={{fontSize:15,fontWeight:600,margin:"6px 0",lineHeight:1.2,color:"#F4F4F5",letterSpacing:"-0.02em"}}>{node.title}</h2>
-    <div style={{fontSize:10,color:"#71717A",marginBottom:12}}>
-      <span>{fmt(node.date)}</span><span style={{margin:"0 5px",opacity:0.4}}>·</span><span>{TYPE_ICONS[node.type]} {node.type}</span>
-      {node.vindicated===true&&<><span style={{margin:"0 5px",opacity:0.4}}>·</span><span style={{color:"#16A34A"}}>✓ Vindicated</span></>}
-      {node.vindicated===null&&<><span style={{margin:"0 5px",opacity:0.4}}>·</span><span style={{color:"#D97706"}}>⏳ Futures Bank</span></>}
-    </div>
-    <div style={{display:"flex",gap:3,marginBottom:12,flexWrap:"wrap"}}>
-      {node.themes.map(t=><span key={t} style={{fontSize:8,padding:"2px 6px",borderRadius:3,background:THEME_COLORS[t]+"18",color:THEME_COLORS[t],border:`1px solid ${THEME_COLORS[t]}33`,fontWeight:t==="digital_art"?700:400}}>{THEME_LABELS[t]}</span>)}
-    </div>
-    <p style={{fontSize:11,lineHeight:1.6,color:"#D4D4D8",margin:"0 0 16px",paddingBottom:12,borderBottom:"1px solid #27272A"}}>{node.desc}</p>
-
-    {inf.length>0&&<div style={{marginBottom:14}}>
-      <h3 style={{fontSize:9,textTransform:"uppercase",letterSpacing:"0.06em",color:"#52525B",margin:"0 0 5px"}}>← Influenced By ({inf.length})</h3>
-      {inf.map(i=><div key={i.id} onClick={()=>nav(i.id)} style={{padding:"5px 7px",marginBottom:2,borderRadius:3,cursor:"pointer",background:"#18181B",border:"1px solid #27272A",display:"flex",alignItems:"center",gap:5}}>
-        <span style={{color:THEME_COLORS[i.themes[0]],fontSize:9}}>{TYPE_ICONS[i.type]}</span>
-        <div><div style={{fontSize:10,color:"#D4D4D8",fontWeight:500}}>{i.title}</div><div style={{fontSize:8,color:"#52525B"}}>{fmt(i.date)} · {ERA_LABELS[i.era].name}</div></div>
-      </div>)}
-    </div>}
-
-    {infd.length>0&&<div style={{marginBottom:14}}>
-      <h3 style={{fontSize:9,textTransform:"uppercase",letterSpacing:"0.06em",color:"#52525B",margin:"0 0 5px"}}>→ Influenced ({infd.length})</h3>
-      {infd.map(i=><div key={i.id} onClick={()=>nav(i.id)} style={{padding:"5px 7px",marginBottom:2,borderRadius:3,cursor:"pointer",background:"#18181B",border:"1px solid #27272A",display:"flex",alignItems:"center",gap:5}}>
-        <span style={{color:THEME_COLORS[i.themes[0]],fontSize:9}}>{TYPE_ICONS[i.type]}</span>
-        <div><div style={{fontSize:10,color:"#D4D4D8",fontWeight:500}}>{i.title}</div><div style={{fontSize:8,color:"#52525B"}}>{fmt(i.date)} · {ERA_LABELS[i.era].name}</div></div>
-      </div>)}
-    </div>}
-
-    <div style={{borderTop:"1px solid #27272A",paddingTop:12}}>
-      <h3 style={{fontSize:9,textTransform:"uppercase",letterSpacing:"0.06em",color:"#52525B",margin:"0 0 5px"}}>Provenance Chain</h3>
-      <Chain node={node} all={all} nav={nav} fmt={fmt} d={0}/>
-    </div>
-  </div>;
-}
-
-function Chain({node,all,nav,fmt,d}) {
-  if(d>4||!node.connections.length) return <div style={{paddingLeft:d*12,fontSize:9,color:"#52525B",marginBottom:1}}><span style={{color:THEME_COLORS[node.themes[0]]}}>●</span> {node.title} <span style={{opacity:0.5}}>— ROOT</span></div>;
-  const ps=node.connections.map(c=>all.find(n=>n.id===c)).filter(Boolean);
-  return <div>
-    <div onClick={()=>nav(node.id)} style={{paddingLeft:d*12,fontSize:9,color:"#A1A1AA",marginBottom:1,cursor:"pointer"}}><span style={{color:THEME_COLORS[node.themes[0]]}}>●</span> {node.title} <span style={{color:"#52525B"}}>({fmt(node.date)})</span></div>
-    {ps.map(p=><Chain key={p.id} node={p} all={all} nav={nav} fmt={fmt} d={d+1}/>)}
-  </div>;
+  );
 }
