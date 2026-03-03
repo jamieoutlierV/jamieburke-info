@@ -196,22 +196,36 @@ const VINDICATION_ICONS = { "Yes": "✅", "No": "❌", "Too Early": "🔮", "N/A
 
 function ThoughtLeadershipCarousel({ onNodeClick }) {
   const scrollRef = useRef(null);
+  const carouselRef = useRef(null);
   const [activeIdx, setActiveIdx] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+
+  // Only run the timer when carousel is visible in viewport
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
-    if (isHovered) return;
+    if (isHovered || !isVisible) return;
     const timer = setInterval(() => {
       setActiveIdx(prev => (prev + 1) % THOUGHT_LEADERSHIP.length);
     }, 10000);
     return () => clearInterval(timer);
-  }, [isHovered]);
+  }, [isHovered, isVisible]);
 
   // No auto-scroll — active card is highlighted via opacity/scale instead
   // This prevents the carousel from hijacking page scroll position
 
   return (
-    <div style={{ marginBottom: 20 }}>
+    <div ref={carouselRef} style={{ marginBottom: 20 }}>
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         marginBottom: 8,
