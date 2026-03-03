@@ -397,7 +397,6 @@ function InsightCard({ insight, onNodeClick }) {
 
 function ThesisNodeCard({ node, expanded, onToggle, relatedTweets, relatedInsights, onNodeClick }) {
   const era = ERA_CONFIG[node.era];
-  if (!era) return null;
   return (
     <div style={{
       marginBottom: expanded ? 16 : 6, border: `1px solid ${expanded ? era.color + "44" : "rgba(255,255,255,0.06)"}`,
@@ -627,7 +626,7 @@ export default function JamieBurkeInfo() {
           />
         )}
 
-        {/* Thought Leadership Carousel */}
+        {/* Thought Leadership Carousel — below search, above content */}
         {view !== "about" && (
           <ThoughtLeadershipCarousel onNodeClick={handleNodeClick} />
         )}
