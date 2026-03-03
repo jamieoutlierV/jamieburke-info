@@ -240,6 +240,7 @@ function ThoughtLeadershipCarousel({ onNodeClick }) {
           display: "flex", gap: 10, overflowX: "auto", scrollBehavior: "smooth",
           scrollbarWidth: "none", msOverflowStyle: "none",
           paddingBottom: 4,
+          minHeight: 200,
         }}
       >
         {THOUGHT_LEADERSHIP.map((item, i) => (
@@ -257,6 +258,7 @@ function ThoughtLeadershipCarousel({ onNodeClick }) {
               transition: "all 0.3s",
               opacity: i === activeIdx ? 1 : 0.55,
               transform: i === activeIdx ? "scale(1)" : "scale(0.97)",
+              display: "flex", flexDirection: "column",
             }}
           >
             <div style={{
@@ -283,14 +285,16 @@ function ThoughtLeadershipCarousel({ onNodeClick }) {
               "{item.headline}"
             </div>
 
-            {i === activeIdx && (
-              <div style={{
-                fontSize: 11, color: "#888", lineHeight: 1.55, marginBottom: 8,
-                fontFamily: "'Source Serif 4', Georgia, serif",
-              }}>
-                {item.body}
-              </div>
-            )}
+            <div style={{
+              fontSize: 11, color: "#888", lineHeight: 1.55, marginBottom: 8,
+              fontFamily: "'Source Serif 4', Georgia, serif",
+              maxHeight: i === activeIdx ? 200 : 0,
+              overflow: "hidden",
+              opacity: i === activeIdx ? 1 : 0,
+              transition: "max-height 0.3s ease, opacity 0.3s ease",
+            }}>
+              {item.body}
+            </div>
 
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {item.relatedNodes.map(nid => {
