@@ -207,19 +207,8 @@ function ThoughtLeadershipCarousel({ onNodeClick }) {
     return () => clearInterval(timer);
   }, [isHovered]);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      const container = scrollRef.current;
-      const card = container.children[activeIdx];
-      if (card) {
-        const cardLeft = card.offsetLeft;
-        const cardWidth = card.offsetWidth;
-        const containerWidth = container.offsetWidth;
-        const scrollTarget = cardLeft - (containerWidth / 2) + (cardWidth / 2);
-        container.scrollTo({ left: scrollTarget, behavior: "smooth" });
-      }
-    }
-  }, [activeIdx]);
+  // No auto-scroll — active card is highlighted via opacity/scale instead
+  // This prevents the carousel from hijacking page scroll position
 
   return (
     <div style={{ marginBottom: 20 }}>
